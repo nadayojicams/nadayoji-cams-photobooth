@@ -25,7 +25,7 @@ radial-gradient(circle at 50% 38%,rgba(255,60,180,.17),transparent 35%),
 .about{border:1px solid var(--pink);background:#090609;color:#fff;padding:10px 16px;font:700 11px "Arial Black, Courier New";letter-spacing:1px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
 .panel{border:1px solid #542044;background:rgba(8,6,8,.75);padding:14px;box-shadow:0 0 25px rgba(255,60,180,.08)}
- .camera{aspect-ratio:var(--camera-ratio,4/3);background:#000;border:2px solid var(--pink);position:relative;overflow:hidden}
+ .camera{background:#000;border:2px solid var(--pink);position:relative;overflow:hidden;width:100%;height:auto}
 video,.captured{width:100%;height:auto;aspect-ratio:var(--camera-ratio,4/3);object-fit:contain;display:block;background:#000}
 .captured{display:none;object-fit:contain;background:#000}
 .scan{position:absolute;inset:12px;border:1px solid rgba(255,130,210,.4);pointer-events:none}
@@ -72,6 +72,22 @@ button:disabled{opacity:.35;cursor:not-allowed}
 @media(max-width:760px){.grid{grid-template-columns:1fr}.receipt-area{order:2}.controls{grid-template-columns:1fr 1fr}.controls .primary{grid-column:1/-1;order:-1}}
   .camera.square-camera{aspect-ratio:1/1}
   .camera.square-camera video,.camera.square-camera .captured{aspect-ratio:1/1;object-fit:cover}
+  .camera.square-camera{
+    width:min(100%, 620px) !important;
+    aspect-ratio:1 / 1 !important;
+    height:auto !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+  .camera.square-camera video,
+  .camera.square-camera .captured{
+    width:100% !important;
+    height:100% !important;
+    aspect-ratio:auto !important;
+    object-fit:cover !important;
+    position:absolute !important;
+    inset:0 !important;
+  }
   .mode-switch{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0}
   .mode-btn{border:2px solid var(--pink);background:#fff;color:#111;border-radius:10px;padding:11px 16px;font-weight:900;letter-spacing:.5px}
   .mode-btn.active{background:var(--pink);color:#fff}
@@ -198,22 +214,19 @@ const setStatus=t=>status.textContent=t;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function syncCameraRatio(){
  const w=video.videoWidth||0, h=video.videoHeight||0;
- if(w>0 && h>0){
-   const ratio=w/h;
-   document.documentElement.style.setProperty("--camera-ratio", boothMode==="square" ? "1/1" : ratio);
-   const frame=document.querySelector(".camera");
-   if(boothMode==="square"){
-     frame.classList.add("square-camera");
-     video.style.objectFit="cover";
-     captured.style.objectFit="cover";
-   }else{
-     frame.classList.remove("square-camera");
-     frame.style.aspectRatio=`${w}/${h}`;
-     video.style.aspectRatio=`${w}/${h}`;
-     captured.style.aspectRatio=`${w}/${h}`;
-     video.style.objectFit="contain";
-     captured.style.objectFit="contain";
-   }
+ const frame=document.querySelector(".camera");
+ if(!w||!h||!frame)return;
+ if(boothMode==="square"){
+   frame.classList.add("square-camera");
+   video.style.objectFit="cover";
+   captured.style.objectFit="cover";
+ }else{
+   frame.classList.remove("square-camera");
+   frame.style.aspectRatio=`${w}/${h}`;
+   video.style.aspectRatio=`${w}/${h}`;
+   captured.style.aspectRatio=`${w}/${h}`;
+   video.style.objectFit="contain";
+   captured.style.objectFit="contain";
  }
 }
 
@@ -230,12 +243,6 @@ async function startCamera(){
   syncCameraRatio();
   video.onloadedmetadata=syncCameraRatio;
   video.onresize=syncCameraRatio;
-  // Match the visible camera frame to the exact intrinsic video dimensions.
-  const track=stream.getVideoTracks()[0];
-  const settings=track ? track.getSettings() : {};
-  const sw=settings.width||video.videoWidth;
-  const sh=settings.height||video.videoHeight;
-  if(sw && sh) document.querySelector(".camera").style.aspectRatio = `${sw}/${sh}`;
   video.style.display="block";captured.style.display="none";
   snap.disabled=false;retake.disabled=true;save.disabled=true;share.disabled=true;
   start.textContent="[ CAMERA READY ]";setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
@@ -512,34 +519,25 @@ function updateModeUI(){
 }
 
 function visibleSquareBlob(){
-  return new Promise((resolve,reject)=>{
-    const vw=video.videoWidth||1280, vh=video.videoHeight||960;
-    const rect=video.getBoundingClientRect();
-    const cw=video.clientWidth||rect.width, ch=video.clientHeight||rect.height;
-    if(!vw||!vh||!cw||!ch){reject(new Error("Camera not ready"));return;}
+ return new Promise((resolve,reject)=>{
+  const vw=video.videoWidth, vh=video.videoHeight;
+  const box=document.querySelector(".camera");
+  const cw=box.clientWidth, ch=box.clientHeight;
+  if(!vw||!vh||!cw||!ch){reject(new Error("Camera not ready"));return;}
 
-    // Use the same displayed preview geometry, then take the centered square.
-    const scale=Math.min(cw/vw,ch/vh);
-    const shownW=vw*scale, shownH=vh*scale;
-    const ox=(cw-shownW)/2, oy=(ch-shownH)/2;
-    const visibleW=Math.min(cw,shownW), visibleH=Math.min(ch,shownH);
-    const sideDisplay=Math.min(visibleW,visibleH);
-    const leftDisplay=(cw-sideDisplay)/2;
-    const topDisplay=(ch-sideDisplay)/2;
+  const side=Math.min(vw,vh);
+  const sx=Math.floor((vw-side)/2);
+  const sy=Math.floor((vh-side)/2);
 
-    const sx=Math.max(0,Math.round((leftDisplay-ox)/scale));
-    const sy=Math.max(0,Math.round((topDisplay-oy)/scale));
-    const side=Math.min(vw-sx,vh-sy,Math.round(sideDisplay/scale));
-
-    const c=document.createElement("canvas");
-    c.width=side;c.height=side;
-    const x=c.getContext("2d");
-    x.save();
-    x.translate(side,0);x.scale(-1,1);
-    x.drawImage(video,sx,sy,side,side,0,0,side,side);
-    x.restore();
-    c.toBlob(b=>b?resolve(b):reject(new Error("Could not create square photo")),"image/jpeg",.95);
-  });
+  const c=document.createElement("canvas");
+  c.width=side;c.height=side;
+  const x=c.getContext("2d");
+  x.save();
+  x.translate(side,0);x.scale(-1,1);
+  x.drawImage(video,sx,sy,side,side,0,0,side,side);
+  x.restore();
+  c.toBlob(b=>b?resolve(b):reject(new Error("Could not create square photo")),"image/jpeg",.95);
+ });
 }
 
 async function takeSquarePhoto(){
@@ -573,27 +571,31 @@ async function takeSquarePhoto(){
 
 
 async function makeCombinedThreePhoto(){
-  if(squareShots.length!==3)return null;
-  const imgs=await Promise.all(squareShots.map(blob=>new Promise((resolve,reject)=>{
-    const im=new Image();
-    im.onload=()=>{URL.revokeObjectURL(im.src);resolve(im)};
-    im.onerror=reject;
-    im.src=URL.createObjectURL(blob);
-  })));
-  const side=Math.min(...imgs.map(im=>Math.min(im.naturalWidth,im.naturalHeight)));
-  const border=24, gap=8, allowance=90;
-  const c=$("threePhotoCanvas");
-  c.width=side+border*2;
-  c.height=side*3+gap*2+border*2+allowance;
-  const x=c.getContext("2d");
-  x.fillStyle="#fff";
-  x.fillRect(0,0,c.width,c.height);
-  imgs.forEach((im,i)=>{
-    const sx=(im.naturalWidth-side)/2, sy=(im.naturalHeight-side)/2;
-    const y=border+i*(side+gap);
-    x.drawImage(im,sx,sy,side,side,border,y,side,side);
-  });
-  return await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+ if(squareShots.length!==3)return null;
+ const imgs=await Promise.all(squareShots.map(blob=>new Promise((resolve,reject)=>{
+  const im=new Image();
+  im.onload=()=>{URL.revokeObjectURL(im.src);resolve(im)};
+  im.onerror=reject;
+  im.src=URL.createObjectURL(blob);
+ })));
+
+ const side=Math.min(...imgs.map(im=>Math.min(im.naturalWidth,im.naturalHeight)));
+ const border=24, gap=8, allowance=90;
+ const c=$("threePhotoCanvas");
+ c.width=side+border*2;
+ c.height=side*3+gap*2+border*2+allowance;
+ const x=c.getContext("2d");
+ x.fillStyle="#fff";
+ x.fillRect(0,0,c.width,c.height);
+
+ imgs.forEach((im,i)=>{
+  const srcSide=Math.min(im.naturalWidth,im.naturalHeight);
+  const sx=Math.floor((im.naturalWidth-srcSide)/2);
+  const sy=Math.floor((im.naturalHeight-srcSide)/2);
+  const y=border+i*(side+gap);
+  x.drawImage(im,sx,sy,srcSide,srcSide,border,y,side,side);
+ });
+ return await new Promise(resolve=>c.toBlob(resolve,"image/png"));
 }
 
 async function shareSquarePhotos(){
@@ -638,6 +640,8 @@ $("receiptMode").onclick=()=>{
 };
 $("squareMode").onclick=()=>{
   boothMode="square";
+  const box=document.querySelector(".camera");
+  if(box) box.classList.add("square-camera");
   squareShots=[];
   ["sq1","sq2","sq3"].forEach(id=>$(id).removeAttribute("src"));
   $("squareFunPrint").disabled=true;$("squareSave").disabled=true;
