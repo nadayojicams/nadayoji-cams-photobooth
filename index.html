@@ -585,6 +585,7 @@ async function makeCombinedThreePhoto(){
  const c=$("threePhotoCanvas");
  c.width=side+border*2;
  c.height=side*3+gap*2+border*2+allowance;
+
  const x=c.getContext("2d");
  x.fillStyle="#fff";
  x.fillRect(0,0,c.width,c.height);
@@ -594,12 +595,13 @@ async function makeCombinedThreePhoto(){
   const sx=Math.floor((im.naturalWidth-srcSide)/2);
   const sy=Math.floor((im.naturalHeight-srcSide)/2);
   const y=border+i*(side+gap);
+
+  // The 32px white frame is physically part of the final image.
   x.fillStyle="#fff";
-    x.fillRect(0,y-border,side+border*2,side+border*2);
-    x.fillStyle="#fff";
-    x.fillRect(0,y-border,side+border*2,side+border*2);
-    x.drawImage(im,sx,sy,srcSide,srcSide,border,y,side,side);
+  x.fillRect(0,y-border,side+border*2,side+border*2);
+  x.drawImage(im,sx,sy,srcSide,srcSide,border,y,side,side);
  });
+
  return await new Promise(resolve=>c.toBlob(resolve,"image/png"));
 }
 
