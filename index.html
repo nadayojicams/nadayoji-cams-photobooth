@@ -147,7 +147,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
         <button id="save" disabled>[ ⇩ SAVE RECEIPT ]</button>
         <button id="share" disabled>[ SHARE ]</button>
       </div>
-      <div class="hint">SAVE RECEIPT → OPEN FUN PRINT → PICTURE IMAGES → SELECT THE SAVED RECEIPT → PRINT TO BQ05</div>
+      <div class="hint">TAP OPEN IN FUN PRINT → CHOOSE FUN PRINT → PRINT TO BQ05</div>
     </section>
   </div>
   <div class="footer">♡ NADAYOJI CAMS ♡</div>
@@ -397,8 +397,45 @@ function buildReceipt(photoBlob){
 }
 
 function retakePhoto(){captured.style.display="none";video.style.display="block";receiptPhoto.removeAttribute("src");snap.disabled=false;retake.disabled=true;save.disabled=true;share.disabled=true;setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]")}
-function saveReceipt(){if(!receiptBlob)return;const u=URL.createObjectURL(receiptBlob),a=document.createElement("a");a.href=u;a.download=`nadayoji-photo-receipt-${Date.now()}.png`;document.body.appendChild(a);a.click();a.remove();setStatus("[ SAVED ♡ OPEN FUN PRINT → PICTURE IMAGES ]");setTimeout(()=>URL.revokeObjectURL(u),1500)}
-async function shareReceipt(){if(!receiptBlob||!navigator.share)return;try{await navigator.share({files:[new File([receiptBlob],"nadayoji-photo-receipt.png",{type:"image/png"})],title:"NADAYOJI Photo Receipt"})}catch(e){}}
+async function saveReceipt(){
+ if(!receiptBlob)return;
+ const file=new File([receiptBlob],"nadayoji-photo-receipt.png",{type:"image/png"});
+ if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+   try{
+     setStatus("[ OPENING SHARE MENU → CHOOSE FUN PRINT ]");
+     await navigator.share({
+       files:[file],
+       title:"NADAYOJI × CANTINA Photo Receipt",
+       text:"Open this receipt in Fun Print and print to BQ05."
+     });
+     setStatus("[ RECEIPT SENT TO SHARE MENU ♡ ]");
+     return;
+   }catch(e){
+     if(e && e.name==="AbortError") return;
+   }
+ }
+ // Fallback for browsers without file sharing.
+ const u=URL.createObjectURL(receiptBlob),a=document.createElement("a");
+ a.href=u;a.download=`nadayoji-photo-receipt-${Date.now()}.png`;
+ document.body.appendChild(a);a.click();a.remove();
+ setStatus("[ SAVED ♡ OPEN FUN PRINT → PICTURE IMAGES ]");
+ setTimeout(()=>URL.revokeObjectURL(u),1500);
+}
+async function shareReceipt(){
+ if(!receiptBlob)return;
+ const file=new File([receiptBlob],"nadayoji-photo-receipt.png",{type:"image/png"});
+ if(!navigator.share || (navigator.canShare && !navigator.canShare({files:[file]}))){
+   setStatus("[ USE OPEN IN FUN PRINT AFTER SAVING THE RECEIPT ]");
+   return;
+ }
+ try{
+   await navigator.share({
+     files:[file],
+     title:"NADAYOJI × CANTINA Photo Receipt",
+     text:"Open this receipt in Fun Print and print to BQ05."
+   });
+ }catch(e){}
+}
 
 $("cameraFallback").addEventListener("change",e=>{
  const file=e.target.files&&e.target.files[0]; if(!file)return;
