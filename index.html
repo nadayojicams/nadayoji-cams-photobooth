@@ -159,6 +159,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
       <img id="threePhotoCombined" class="three-photo-combined" alt="Three square photos with white border" style="display:none">
       <div class="receipt-actions square-actions">
         <button id="squareFunPrint" disabled>[ ⇩ SAVE PHOTO ]</button>
+        <button id="squareOpenFunPrint" disabled>[ OPEN IN FUN PRINT ]</button>
         <button id="squareSave" disabled>[ ⇩ SAVE 3 PHOTOS ]</button>
       </div>
     </section>
@@ -552,7 +553,7 @@ async function takeSquarePhoto(){
     $("sq"+(i+1)).src=URL.createObjectURL(blob);
     if(squareShots.length===3){
       $("threePhotoCombined").style.display="none";
-      $("squareFunPrint").disabled=false;
+      $("squareFunPrint").disabled=false;$("squareOpenFunPrint").disabled=false;
       $("squareSave").disabled=false;
       setStatus("[ 3 SQUARE PHOTOS READY ♡ ]");
       snap.textContent="[ 3 PHOTOS READY ]";
@@ -594,6 +595,8 @@ async function makeCombinedThreePhoto(){
   const sy=Math.floor((im.naturalHeight-srcSide)/2);
   const y=border+i*(side+gap);
   x.fillStyle="#fff";
+    x.fillRect(0,y-border,side+border*2,side+border*2);
+    x.fillStyle="#fff";
     x.fillRect(0,y-border,side+border*2,side+border*2);
     x.drawImage(im,sx,sy,srcSide,srcSide,border,y,side,side);
  });
@@ -637,7 +640,7 @@ $("receiptMode").onclick=()=>{
   boothMode="receipt";
   squareShots=[];
   ["sq1","sq2","sq3"].forEach(id=>$(id).removeAttribute("src"));
-  $("squareFunPrint").disabled=true;$("squareSave").disabled=true;
+  $("squareFunPrint").disabled=true;$("squareOpenFunPrint").disabled=true;$("squareSave").disabled=true;
   updateModeUI();
 };
 $("squareMode").onclick=()=>{
@@ -650,6 +653,7 @@ $("squareMode").onclick=()=>{
   updateModeUI();
 };
 $("squareFunPrint").onclick=saveSquarePhotos;
+$("squareOpenFunPrint").onclick=shareSquarePhotos;
 $("squareSave").onclick=saveSquarePhotos;
 
 start.onclick=async()=>{
