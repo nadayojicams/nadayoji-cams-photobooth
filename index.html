@@ -606,9 +606,10 @@ async function makeCombinedThreePhoto(){
   x.fillStyle="#fff";
   x.fillRect(0,0,c.width,c.height);
   imgs.forEach((im,i)=>{
-    const sx=(im.naturalWidth-side)/2, sy=(im.naturalHeight-side)/2;
+    const srcSide=Math.min(im.naturalWidth,im.naturalHeight);
+    const sx=(im.naturalWidth-srcSide)/2, sy=(im.naturalHeight-srcSide)/2;
     const y=border+i*(side+gap);
-    x.drawImage(im,sx,sy,side,side,border,y,side,side);
+    x.drawImage(im,sx,sy,srcSide,srcSide,border,y,side,side);
   });
   return await new Promise(resolve=>c.toBlob(resolve,"image/png"));
 }
