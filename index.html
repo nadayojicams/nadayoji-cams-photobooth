@@ -72,6 +72,24 @@ button:disabled{opacity:.35;cursor:not-allowed}
 @media(max-width:760px){.grid{grid-template-columns:1fr}.receipt-area{order:2}.controls{grid-template-columns:1fr 1fr}.controls .primary{grid-column:1/-1;order:-1}}
   .camera.square-camera{aspect-ratio:1/1}
   .camera.square-camera video,.camera.square-camera .captured{aspect-ratio:1/1;object-fit:cover}
+  .camera.square-camera{
+    width:min(100%, 620px) !important;
+    height:auto !important;
+    aspect-ratio:1 / 1 !important;
+    position:relative;
+    overflow:hidden;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .camera.square-camera video,
+  .camera.square-camera .captured{
+    position:absolute !important;
+    inset:0 !important;
+    width:100% !important;
+    height:100% !important;
+    aspect-ratio:1 / 1 !important;
+    object-fit:cover !important;
+  }
   .mode-switch{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0}
   .mode-btn{border:2px solid var(--pink);background:#fff;color:#111;border-radius:10px;padding:11px 16px;font-weight:900;letter-spacing:.5px}
   .mode-btn.active{background:var(--pink);color:#fff}
@@ -202,9 +220,15 @@ function syncCameraRatio(){
    const frame=document.querySelector(".camera");
    if(boothMode==="square"){
      document.documentElement.style.setProperty("--camera-ratio","1/1");
-     frame.style.aspectRatio="1/1";
-     video.style.aspectRatio="1/1";
-     captured.style.aspectRatio="1/1";
+     frame.style.width="min(100%, 620px)";
+     frame.style.height="auto";
+     frame.style.aspectRatio="1 / 1";
+     video.style.width="100%";
+     video.style.height="100%";
+     video.style.aspectRatio="1 / 1";
+     captured.style.width="100%";
+     captured.style.height="100%";
+     captured.style.aspectRatio="1 / 1";
      video.style.objectFit="cover";
      captured.style.objectFit="cover";
    }else{
@@ -240,10 +264,17 @@ async function startCamera(){
   if(sw && sh && boothMode==="receipt"){
     document.querySelector(".camera").style.aspectRatio = `${sw}/${sh}`;
   }else if(boothMode==="square"){
-    document.querySelector(".camera").style.aspectRatio = "1/1";
-    video.style.aspectRatio="1/1";
-    captured.style.aspectRatio="1/1";
+    const cameraBox=document.querySelector(".camera");
+    cameraBox.style.width="min(100%, 620px)";
+    cameraBox.style.height="auto";
+    cameraBox.style.aspectRatio="1 / 1";
+    video.style.width="100%";
+    video.style.height="100%";
+    video.style.aspectRatio="1 / 1";
     video.style.objectFit="cover";
+    captured.style.width="100%";
+    captured.style.height="100%";
+    captured.style.aspectRatio="1 / 1";
     captured.style.objectFit="cover";
   }
   video.style.display="block";captured.style.display="none";
@@ -505,11 +536,20 @@ function updateModeUI(){
   if(cameraBox){
     cameraBox.classList.toggle("square-camera",boothMode==="square");
     if(boothMode==="square"){
-      cameraBox.style.aspectRatio="1/1";
-      video.style.aspectRatio="1/1";
-      captured.style.aspectRatio="1/1";
+      cameraBox.style.width="min(100%, 620px)";
+      cameraBox.style.height="auto";
+      cameraBox.style.aspectRatio="1 / 1";
+      video.style.width="100%";
+      video.style.height="100%";
+      video.style.aspectRatio="1 / 1";
       video.style.objectFit="cover";
+      captured.style.width="100%";
+      captured.style.height="100%";
+      captured.style.aspectRatio="1 / 1";
       captured.style.objectFit="cover";
+    }else{
+      cameraBox.style.width="";
+      cameraBox.style.height="";
     }
   }
   $("receiptMode").classList.toggle("active",boothMode==="receipt");
