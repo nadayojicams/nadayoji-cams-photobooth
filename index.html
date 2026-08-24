@@ -315,13 +315,13 @@ function buildReceipt(photoBlob){
 
     // NADAYOJI logo — preserve the complete 1:1 square artwork.
     // The source asset is 500x500; draw the entire asset into a square with no crop.
-    const logoSize=140;
+    const logoSize=110;
     const logoX=center-logoSize/2, logoY=25;
-    // The embedded asset itself is now a fully opaque 1:1 black square.
+    // Keep the generated receipt logo compact and fully separated from the title.
     ctx.drawImage(logo,logoX,logoY,logoSize,logoSize);
 
-    let y=logoY+logoSize+14;
-    txt("CANTINA × NADAYOJI CAMS",y,44,900); y+=44;
+    let y=logoY+logoSize+55;
+    txt("CANTINA × NADAYOJI CAMS",y,44,900); y+=52;
     rule(); y+=42;
     txt("✦ PHOTO RECEIPT ✦",y,40,900); y+=52;
 
