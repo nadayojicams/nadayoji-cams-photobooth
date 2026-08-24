@@ -565,7 +565,7 @@ async function makeCombinedThreePhoto(){
     im.src=URL.createObjectURL(blob);
   })));
   const side=Math.min(...imgs.map(im=>Math.min(im.naturalWidth,im.naturalHeight)));
-  const border=28, gap=18, allowance=110;
+  const border=80, gap=45, allowance=160;
   const c=$("threePhotoCanvas");
   c.width=side+border*2;
   c.height=side*3+gap*2+border*2+allowance;
