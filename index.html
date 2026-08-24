@@ -265,6 +265,13 @@ function syncCameraRatio(){
 }
 
 if(!window.__squareCameraResizeBound){
+  const box=document.querySelector(".camera");
+  if(window.ResizeObserver && box){
+    window.__squareCameraObserver=new ResizeObserver(()=>{
+      if(boothMode==="square") lockSquareCamera();
+    });
+    window.__squareCameraObserver.observe(box);
+  }
   window.__squareCameraResizeBound=true;
   window.addEventListener("resize",()=>{if(boothMode==="square") lockSquareCamera();});
   window.addEventListener("orientationchange",()=>setTimeout(()=>{if(boothMode==="square") lockSquareCamera();},100));
@@ -308,6 +315,10 @@ async function startCamera(){
   video.style.display="block";captured.style.display="none";
   snap.disabled=false;retake.disabled=true;save.disabled=true;share.disabled=true;
   start.textContent="[ CAMERA READY ]";setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
+  if(boothMode==="square"){
+    lockSquareCamera();
+    [0,50,150,300,600,1000,1800].forEach(ms=>setTimeout(lockSquareCamera,ms));
+  }
  }catch(e){
   console.error("Camera error:",e);
   if(e.name==="NotAllowedError" || e.name==="PermissionDeniedError"){
@@ -563,16 +574,36 @@ function lockSquareCamera(){
   if(boothMode!=="square") return;
   const box=document.querySelector(".camera");
   if(!box) return;
-  const width=Math.min(box.parentElement ? box.parentElement.clientWidth : 620,620);
-  box.style.width=width+"px";
-  box.style.height=width+"px";
-  box.style.aspectRatio="auto";
-  video.style.width=width+"px";
-  video.style.height=width+"px";
-  captured.style.width=width+"px";
-  captured.style.height=width+"px";
-  video.style.objectFit="cover";
-  captured.style.objectFit="cover";
+
+  // Read the actual rendered width after Safari has laid out the page,
+  // then force the height to exactly the same number of CSS pixels.
+  const parent=box.parentElement;
+  const available=(parent ? parent.getBoundingClientRect().width : box.getBoundingClientRect().width);
+  const width=Math.max(1, Math.min(Math.floor(available), 620));
+
+  box.style.setProperty("width", width+"px", "important");
+  box.style.setProperty("height", width+"px", "important");
+  box.style.setProperty("min-height", width+"px", "important");
+  box.style.setProperty("max-height", width+"px", "important");
+  box.style.setProperty("aspect-ratio", "auto", "important");
+  box.style.setProperty("overflow", "hidden", "important");
+
+  video.style.setProperty("position","absolute","important");
+  video.style.setProperty("left","0","important");
+  video.style.setProperty("top","0","important");
+  video.style.setProperty("width","100%","important");
+  video.style.setProperty("height","100%","important");
+  video.style.setProperty("min-width","100%","important");
+  video.style.setProperty("min-height","100%","important");
+  video.style.setProperty("max-width","none","important");
+  video.style.setProperty("max-height","none","important");
+  video.style.setProperty("object-fit","cover","important");
+  video.style.setProperty("aspect-ratio","auto","important");
+
+  captured.style.setProperty("width","100%","important");
+  captured.style.setProperty("height","100%","important");
+  captured.style.setProperty("object-fit","cover","important");
+  captured.style.setProperty("aspect-ratio","auto","important");
 }
 
 function updateModeUI(){
