@@ -264,6 +264,12 @@ function syncCameraRatio(){
  }
 }
 
+if(!window.__squareCameraResizeBound){
+  window.__squareCameraResizeBound=true;
+  window.addEventListener("resize",()=>{if(boothMode==="square") lockSquareCamera();});
+  window.addEventListener("orientationchange",()=>setTimeout(()=>{if(boothMode==="square") lockSquareCamera();},100));
+}
+
 async function startCamera(){
  try{
   if(!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
@@ -275,8 +281,8 @@ async function startCamera(){
   video.srcObject=stream;
   await video.play();
   syncCameraRatio();
-  video.onloadedmetadata=syncCameraRatio;
-  video.onresize=syncCameraRatio;
+  video.onloadedmetadata=()=>{syncCameraRatio(); if(boothMode==="square") lockSquareCamera();};
+  video.onresize=()=>{syncCameraRatio(); if(boothMode==="square") lockSquareCamera();};
   // Match the visible camera frame to the exact intrinsic video dimensions.
   const track=stream.getVideoTracks()[0];
   const settings=track ? track.getSettings() : {};
@@ -288,7 +294,8 @@ async function startCamera(){
     const cameraBox=document.querySelector(".camera");
     cameraBox.style.width="min(100%, 620px)";
     cameraBox.style.height="auto";
-    cameraBox.style.aspectRatio="1 / 1";
+    cameraBox.style.aspectRatio="auto";
+      lockSquareCamera();
     video.style.width="100%";
     video.style.height="100%";
     video.style.aspectRatio="1 / 1";
@@ -551,6 +558,22 @@ $("cameraFallback").addEventListener("change",e=>{
 let boothMode="receipt";
 let squareShots=[];
 let squareBusy=false;
+
+function lockSquareCamera(){
+  if(boothMode!=="square") return;
+  const box=document.querySelector(".camera");
+  if(!box) return;
+  const width=Math.min(box.parentElement ? box.parentElement.clientWidth : 620,620);
+  box.style.width=width+"px";
+  box.style.height=width+"px";
+  box.style.aspectRatio="auto";
+  video.style.width=width+"px";
+  video.style.height=width+"px";
+  captured.style.width=width+"px";
+  captured.style.height=width+"px";
+  video.style.objectFit="cover";
+  captured.style.objectFit="cover";
+}
 
 function updateModeUI(){
   const cameraBox=document.querySelector(".camera");
