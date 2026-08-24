@@ -199,12 +199,23 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function syncCameraRatio(){
  const w=video.videoWidth||0, h=video.videoHeight||0;
  if(w>0 && h>0){
-   const ratio=w/h;
-   document.documentElement.style.setProperty("--camera-ratio", ratio);
    const frame=document.querySelector(".camera");
-   frame.style.aspectRatio=`${w}/${h}`;
-   video.style.aspectRatio=`${w}/${h}`;
-   captured.style.aspectRatio=`${w}/${h}`;
+   if(boothMode==="square"){
+     document.documentElement.style.setProperty("--camera-ratio","1/1");
+     frame.style.aspectRatio="1/1";
+     video.style.aspectRatio="1/1";
+     captured.style.aspectRatio="1/1";
+     video.style.objectFit="cover";
+     captured.style.objectFit="cover";
+   }else{
+     const ratio=w/h;
+     document.documentElement.style.setProperty("--camera-ratio", ratio);
+     frame.style.aspectRatio=`${w}/${h}`;
+     video.style.aspectRatio=`${w}/${h}`;
+     captured.style.aspectRatio=`${w}/${h}`;
+     video.style.objectFit="contain";
+     captured.style.objectFit="contain";
+   }
  }
 }
 
@@ -226,7 +237,15 @@ async function startCamera(){
   const settings=track ? track.getSettings() : {};
   const sw=settings.width||video.videoWidth;
   const sh=settings.height||video.videoHeight;
-  if(sw && sh) document.querySelector(".camera").style.aspectRatio = `${sw}/${sh}`;
+  if(sw && sh && boothMode==="receipt"){
+    document.querySelector(".camera").style.aspectRatio = `${sw}/${sh}`;
+  }else if(boothMode==="square"){
+    document.querySelector(".camera").style.aspectRatio = "1/1";
+    video.style.aspectRatio="1/1";
+    captured.style.aspectRatio="1/1";
+    video.style.objectFit="cover";
+    captured.style.objectFit="cover";
+  }
   video.style.display="block";captured.style.display="none";
   snap.disabled=false;retake.disabled=true;save.disabled=true;share.disabled=true;
   start.textContent="[ CAMERA READY ]";setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
@@ -483,7 +502,16 @@ let squareBusy=false;
 
 function updateModeUI(){
   const cameraBox=document.querySelector(".camera");
-  if(cameraBox) cameraBox.classList.toggle("square-camera",boothMode==="square");
+  if(cameraBox){
+    cameraBox.classList.toggle("square-camera",boothMode==="square");
+    if(boothMode==="square"){
+      cameraBox.style.aspectRatio="1/1";
+      video.style.aspectRatio="1/1";
+      captured.style.aspectRatio="1/1";
+      video.style.objectFit="cover";
+      captured.style.objectFit="cover";
+    }
+  }
   $("receiptMode").classList.toggle("active",boothMode==="receipt");
   $("squareMode").classList.toggle("active",boothMode==="square");
   $("receiptMode").setAttribute("aria-pressed",boothMode==="receipt");
