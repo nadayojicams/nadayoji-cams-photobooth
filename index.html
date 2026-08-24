@@ -158,7 +158,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
       <canvas id="threePhotoCanvas" class="hidden"></canvas>
       <img id="threePhotoCombined" class="three-photo-combined" alt="Three square photos with white border" style="display:none">
       <div class="receipt-actions square-actions">
-        <button id="squareFunPrint" disabled>[ OPEN IN FUN PRINT ]</button>
+        <button id="squareFunPrint" disabled>[ ⇩ SAVE PHOTO ]</button>
         <button id="squareSave" disabled>[ ⇩ SAVE 3 PHOTOS ]</button>
       </div>
     </section>
@@ -194,7 +194,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
         <button id="save" disabled>[ ⇩ SAVE RECEIPT ]</button>
         <button id="share" disabled>[ SHARE ]</button>
       </div>
-      <div class="hint">TAP OPEN IN FUN PRINT → CHOOSE FUN PRINT → PRINT TO BQ05</div>
+      <div class="hint">TAP SAVE PHOTO → CHOOSE FUN PRINT → PRINT TO BQ05</div>
     </section>
   </div>
   <div class="footer">♡ NADAYOJI CAMS ♡</div>
@@ -472,7 +472,7 @@ async function shareReceipt(){
  if(!receiptBlob)return;
  const file=new File([receiptBlob],"nadayoji-photo-receipt.png",{type:"image/png"});
  if(!navigator.share || (navigator.canShare && !navigator.canShare({files:[file]}))){
-   setStatus("[ USE OPEN IN FUN PRINT AFTER SAVING THE RECEIPT ]");
+   setStatus("[ USE SAVE PHOTO AFTER SAVING THE RECEIPT ]");
    return;
  }
  try{
@@ -614,7 +614,7 @@ async function shareSquarePhotos(){
         title:"NADAYOJI CAMS — 3 Square Photos",
         text:"Three square photos with a white border."
       });
-      setStatus("[ ONE 3-PHOTO IMAGE SENT TO SHARE MENU ♡ ]");
+      setStatus("[ ONE 3-PHOTO IMAGE SAVED ♡ ]");
       return;
     }catch(e){if(e && e.name==="AbortError")return;}
   }
@@ -649,7 +649,7 @@ $("squareMode").onclick=()=>{
   $("squareFunPrint").disabled=true;$("squareSave").disabled=true;
   updateModeUI();
 };
-$("squareFunPrint").onclick=shareSquarePhotos;
+$("squareFunPrint").onclick=saveSquarePhotos;
 $("squareSave").onclick=saveSquarePhotos;
 
 start.onclick=async()=>{
