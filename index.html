@@ -70,7 +70,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .footer{text-align:center;margin-top:24px;color:#a28b9d;font-size:9px;letter-spacing:2px}
 .hidden{display:none!important}
 @media(max-width:760px){.grid{grid-template-columns:1fr}.receipt-area{order:2}.controls{grid-template-columns:1fr 1fr}.controls .primary{grid-column:1/-1;order:-1}}
-  .camera.square-camera{aspect-ratio:1/1}
+  .camera{position:relative}\n  .camera.square-camera{aspect-ratio:1/1}
   .camera.square-camera video,.camera.square-camera .captured{aspect-ratio:1/1;object-fit:cover}
   .camera.square-camera{
     width:min(100%, 620px) !important;
@@ -90,6 +90,27 @@ button:disabled{opacity:.35;cursor:not-allowed}
     aspect-ratio:1 / 1 !important;
     object-fit:cover !important;
   }
+  .camera.square-camera{
+    width:min(100%, 620px) !important;
+    aspect-ratio:auto !important;
+    height:auto !important;
+    overflow:hidden !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+  .camera.square-camera::before{
+    content:"";
+    display:block;
+    padding-top:100%;
+  }
+  .camera.square-camera video,
+  .camera.square-camera .captured{
+    position:absolute !important;
+    left:0 !important; top:0 !important;
+    width:100% !important; height:100% !important;
+    max-width:none !important; max-height:none !important;
+    object-fit:cover !important;
+  }
   .mode-switch{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0}
   .mode-btn{border:2px solid var(--pink);background:#fff;color:#111;border-radius:10px;padding:11px 16px;font-weight:900;letter-spacing:.5px}
   .mode-btn.active{background:var(--pink);color:#fff}
@@ -97,7 +118,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
   .square-grid{display:flex;flex-direction:column;gap:8px;background:#fff;padding:28px;border:6px solid #111;align-items:center}
   .square-grid img{display:block;width:min(100%,520px);aspect-ratio:1/1;object-fit:cover;background:#eee;border:24px solid #fff;box-sizing:content-box}
   .square-grid::after{content:"";display:block;width:min(100%,520px);height:90px}
-  .three-photo-combined{display:block;width:min(100%,520px);height:auto;margin:12px auto 0;background:#fff}
+  .three-photo-combined{display:block;width:min(100%,576px);height:auto;margin:12px auto 0;background:#fff}
   .square-actions{margin-top:12px}
   @media(max-width:700px){.square-grid{gap:6px;padding:8px}.mode-btn{font-size:13px;padding:10px 12px}}
 </style>
@@ -647,8 +668,11 @@ async function makeCombinedThreePhoto(){
   x.fillRect(0,0,c.width,c.height);
   imgs.forEach((im,i)=>{
     const srcSide=Math.min(im.naturalWidth,im.naturalHeight);
-    const sx=(im.naturalWidth-srcSide)/2, sy=(im.naturalHeight-srcSide)/2;
+    const sx=Math.floor((im.naturalWidth-srcSide)/2);
+    const sy=Math.floor((im.naturalHeight-srcSide)/2);
     const y=border+i*(side+gap);
+    x.fillStyle="#fff";
+    x.fillRect(0,y-border,side+border*2,side+border*2);
     x.drawImage(im,sx,sy,srcSide,srcSide,border,y,side,side);
   });
   return await new Promise(resolve=>c.toBlob(resolve,"image/png"));
