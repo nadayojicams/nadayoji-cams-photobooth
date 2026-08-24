@@ -70,6 +70,8 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .footer{text-align:center;margin-top:24px;color:#a28b9d;font-size:9px;letter-spacing:2px}
 .hidden{display:none!important}
 @media(max-width:760px){.grid{grid-template-columns:1fr}.receipt-area{order:2}.controls{grid-template-columns:1fr 1fr}.controls .primary{grid-column:1/-1;order:-1}}
+  .camera.square-camera{aspect-ratio:1/1}
+  .camera.square-camera video,.camera.square-camera .captured{aspect-ratio:1/1;object-fit:cover}
   .mode-switch{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0}
   .mode-btn{border:2px solid var(--pink);background:#fff;color:#111;border-radius:10px;padding:11px 16px;font-weight:900;letter-spacing:.5px}
   .mode-btn.active{background:var(--pink);color:#fff}
@@ -77,7 +79,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
   .square-grid{display:flex;flex-direction:column;gap:8px;background:#fff;padding:28px;border:6px solid #111;align-items:center}
   .square-grid img{display:block;width:min(100%,520px);aspect-ratio:1/1;object-fit:cover;background:#eee;border:24px solid #fff;box-sizing:content-box}
   .square-grid::after{content:"";display:block;width:min(100%,520px);height:90px}
-  .three-photo-combined{display:block;width:100%;max-width:700px;height:auto;margin:12px auto 0;background:#fff}
+  .three-photo-combined{display:block;width:min(100%,520px);height:auto;margin:12px auto 0;background:#fff}
   .square-actions{margin-top:12px}
   @media(max-width:700px){.square-grid{gap:6px;padding:8px}.mode-btn{font-size:13px;padding:10px 12px}}
 </style>
@@ -480,6 +482,8 @@ let squareShots=[];
 let squareBusy=false;
 
 function updateModeUI(){
+  const cameraBox=document.querySelector(".camera");
+  if(cameraBox) cameraBox.classList.toggle("square-camera",boothMode==="square");
   $("receiptMode").classList.toggle("active",boothMode==="receipt");
   $("squareMode").classList.toggle("active",boothMode==="square");
   $("receiptMode").setAttribute("aria-pressed",boothMode==="receipt");
@@ -566,7 +570,7 @@ async function makeCombinedThreePhoto(){
     im.src=URL.createObjectURL(blob);
   })));
   const side=Math.min(...imgs.map(im=>Math.min(im.naturalWidth,im.naturalHeight)));
-  const border=190, gap=18, allowance=210;
+  const border=24, gap=8, allowance=90;
   const c=$("threePhotoCanvas");
   c.width=side+border*2;
   c.height=side*3+gap*2+border*2+allowance;
