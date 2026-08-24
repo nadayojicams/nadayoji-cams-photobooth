@@ -580,7 +580,7 @@ async function makeCombinedThreePhoto(){
  })));
 
  const side=Math.min(...imgs.map(im=>Math.min(im.naturalWidth,im.naturalHeight)));
- const border=40, gap=8, allowance=90;
+ const border=20, gap=8, allowance=90;
  const c=$("threePhotoCanvas");
  c.width=side+border*2;
  c.height=side*3+gap*2+border*2+allowance;
@@ -593,7 +593,9 @@ async function makeCombinedThreePhoto(){
   const sx=Math.floor((im.naturalWidth-srcSide)/2);
   const sy=Math.floor((im.naturalHeight-srcSide)/2);
   const y=border+i*(side+gap);
-  x.drawImage(im,sx,sy,srcSide,srcSide,border,y,side,side);
+  x.fillStyle="#fff";
+    x.fillRect(0,y-border,side+border*2,side+border*2);
+    x.drawImage(im,sx,sy,srcSide,srcSide,border,y,side,side);
  });
  return await new Promise(resolve=>c.toBlob(resolve,"image/png"));
 }
