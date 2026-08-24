@@ -77,6 +77,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
   .square-grid{display:flex;flex-direction:column;gap:12px;background:#fff;padding:12px;border:2px solid #111;align-items:center}
   .square-grid img{display:block;width:min(100%,520px);aspect-ratio:1/1;object-fit:cover;background:#eee}
   .square-grid::after{content:"";display:block;width:min(100%,520px);height:90px}
+  .three-photo-combined{display:block;width:min(100%,520px);height:auto;margin:12px auto 0;background:#fff}
   .square-actions{margin-top:12px}
   @media(max-width:700px){.square-grid{gap:6px;padding:8px}.mode-btn{font-size:13px;padding:10px 12px}}
 </style>
@@ -136,6 +137,8 @@ button:disabled{opacity:.35;cursor:not-allowed}
         <img id="sq2" alt="Square photo 2">
         <img id="sq3" alt="Square photo 3">
       </div>
+      <canvas id="threePhotoCanvas" class="hidden"></canvas>
+      <img id="threePhotoCombined" class="three-photo-combined" alt="Three square photos with white border" style="display:none">
       <div class="receipt-actions square-actions">
         <button id="squareFunPrint" disabled>[ OPEN IN FUN PRINT ]</button>
         <button id="squareSave" disabled>[ ⇩ SAVE 3 PHOTOS ]</button>
@@ -552,32 +555,62 @@ async function takeSquarePhoto(){
   }
 }
 
+
+async function makeCombinedThreePhoto(){
+  if(squareShots.length!==3)return null;
+  const imgs=await Promise.all(squareShots.map(blob=>new Promise((resolve,reject)=>{
+    const im=new Image();
+    im.onload=()=>{URL.revokeObjectURL(im.src);resolve(im)};
+    im.onerror=reject;
+    im.src=URL.createObjectURL(blob);
+  })));
+  const side=Math.min(...imgs.map(im=>Math.min(im.naturalWidth,im.naturalHeight)));
+  const border=28, gap=18, allowance=110;
+  const c=$("threePhotoCanvas");
+  c.width=side+border*2;
+  c.height=side*3+gap*2+border*2+allowance;
+  const x=c.getContext("2d");
+  x.fillStyle="#fff";
+  x.fillRect(0,0,c.width,c.height);
+  imgs.forEach((im,i)=>{
+    const sx=(im.naturalWidth-side)/2, sy=(im.naturalHeight-side)/2;
+    const y=border+i*(side+gap);
+    x.drawImage(im,sx,sy,side,side,border,y,side,side);
+  });
+  return await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+}
+
 async function shareSquarePhotos(){
-  if(squareShots.length!==3)return;
-  const files=squareShots.map((b,i)=>new File([b],`nadayoji-square-${i+1}.jpg`,{type:"image/jpeg"}));
-  if(navigator.share && (!navigator.canShare || navigator.canShare({files}))){
+  const combined=await makeCombinedThreePhoto();
+  if(!combined)return;
+  $("threePhotoCombined").src=URL.createObjectURL(combined);
+  $("threePhotoCombined").style.display="block";
+  $("squareFunPrint").disabled=false;
+  const file=new File([combined],"nadayoji-3-square-photos.png",{type:"image/png"});
+  if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
     try{
       await navigator.share({
-        files,
+        files:[file],
         title:"NADAYOJI CAMS — 3 Square Photos",
-        text:"3 square photos from the NADAYOJI CAMS booth."
+        text:"Three square photos with a white border."
       });
-      setStatus("[ 3 PHOTOS SENT TO SHARE MENU ♡ ]");
+      setStatus("[ ONE 3-PHOTO IMAGE SENT TO SHARE MENU ♡ ]");
       return;
     }catch(e){if(e && e.name==="AbortError")return;}
   }
-  setStatus("[ SHARE IS UNAVAILABLE — USE SAVE 3 PHOTOS ]");
+  setStatus("[ COMBINED PHOTO READY — TAP SAVE 3 PHOTOS ]");
 }
 
-function saveSquarePhotos(){
-  if(squareShots.length!==3)return;
-  squareShots.forEach((b,i)=>{
-    const u=URL.createObjectURL(b),a=document.createElement("a");
-    a.href=u;a.download=`nadayoji-square-${i+1}.jpg`;
-    document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(u),1200);
-  });
-  setStatus("[ 3 SQUARE PHOTOS SAVED ♡ ]");
+async function saveSquarePhotos(){
+  const combined=await makeCombinedThreePhoto();
+  if(!combined)return;
+  $("threePhotoCombined").src=URL.createObjectURL(combined);
+  $("threePhotoCombined").style.display="block";
+  const u=URL.createObjectURL(combined),a=document.createElement("a");
+  a.href=u;a.download="nadayoji-3-square-photos.png";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),1500);
+  setStatus("[ 3 PHOTOS SAVED AS ONE IMAGE ♡ ]");
 }
 
 $("receiptMode").onclick=()=>{
