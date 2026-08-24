@@ -74,10 +74,10 @@ button:disabled{opacity:.35;cursor:not-allowed}
   .mode-btn{border:2px solid var(--pink);background:#fff;color:#111;border-radius:10px;padding:11px 16px;font-weight:900;letter-spacing:.5px}
   .mode-btn.active{background:var(--pink);color:#fff}
   .square-result{min-width:0}
-  .square-grid{display:flex;flex-direction:column;gap:12px;background:#fff;padding:12px;border:2px solid #111;align-items:center}
-  .square-grid img{display:block;width:min(100%,520px);aspect-ratio:1/1;object-fit:cover;background:#eee}
+  .square-grid{display:flex;flex-direction:column;gap:8px;background:#fff;padding:28px;border:6px solid #111;align-items:center}
+  .square-grid img{display:block;width:min(100%,520px);aspect-ratio:1/1;object-fit:cover;background:#eee;border:24px solid #fff;box-sizing:content-box}
   .square-grid::after{content:"";display:block;width:min(100%,520px);height:90px}
-  .three-photo-combined{display:block;width:min(100%,520px);height:auto;margin:12px auto 0;background:#fff}
+  .three-photo-combined{display:block;width:100%;max-width:700px;height:auto;margin:12px auto 0;background:#fff}
   .square-actions{margin-top:12px}
   @media(max-width:700px){.square-grid{gap:6px;padding:8px}.mode-btn{font-size:13px;padding:10px 12px}}
 </style>
@@ -538,6 +538,7 @@ async function takeSquarePhoto(){
     const i=squareShots.length-1;
     $("sq"+(i+1)).src=URL.createObjectURL(blob);
     if(squareShots.length===3){
+      $("threePhotoCombined").style.display="none";
       $("squareFunPrint").disabled=false;
       $("squareSave").disabled=false;
       setStatus("[ 3 SQUARE PHOTOS READY ♡ ]");
@@ -565,7 +566,7 @@ async function makeCombinedThreePhoto(){
     im.src=URL.createObjectURL(blob);
   })));
   const side=Math.min(...imgs.map(im=>Math.min(im.naturalWidth,im.naturalHeight)));
-  const border=80, gap=45, allowance=160;
+  const border=190, gap=18, allowance=210;
   const c=$("threePhotoCanvas");
   c.width=side+border*2;
   c.height=side*3+gap*2+border*2+allowance;
