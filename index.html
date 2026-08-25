@@ -48,7 +48,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .info strong{color:#fff}
 .receipt-area{display:flex;flex-direction:column;align-items:center}
 .receipt-label{font-size:12px;color:#ff8dce;letter-spacing:2px;margin:4px 0 10px}
-.receipt-paper{width:min(460px,100%);background:#fff;color:#000;font-weight:900;padding:20px 18px 140px;box-shadow:0 0 30px rgba(255,255,255,.08);font-family:Arial,Helvetica,sans-serif}
+.receipt-paper{width:min(460px,100%);background:#fff;color:#000;font-weight:900;padding:20px 18px 280px;box-shadow:0 0 30px rgba(255,255,255,.08);font-family:Arial,Helvetica,sans-serif}
 .receipt-logo{display:block;width:90px;margin:0 auto 3px;filter:grayscale(1) contrast(2)}
 .center{text-align:center}
 .cantina{font-size:28px;font-weight:900;letter-spacing:2px;margin-top:4px}
@@ -614,7 +614,7 @@ async function makeFunPrintThreePhoto(){
   im.src=URL.createObjectURL(blob);
  })));
  const side=Math.min(...imgs.map(im=>Math.min(im.naturalWidth,im.naturalHeight)));
- const border=128, gap=32, allowance=360;
+ const border=128, gap=32, allowance=720;
  const c=document.createElement("canvas");
  c.width=side+border*2;
  c.height=side*3+gap*2+border*2+allowance;
