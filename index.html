@@ -605,25 +605,48 @@ async function makeCombinedThreePhoto(){
  return await new Promise(resolve=>c.toBlob(resolve,"image/png"));
 }
 
+async function makeFunPrintThreePhoto(){
+ if(squareShots.length!==3)return null;
+ const imgs=await Promise.all(squareShots.map(blob=>new Promise((resolve,reject)=>{
+  const im=new Image();
+  im.onload=()=>{URL.revokeObjectURL(im.src);resolve(im)};
+  im.onerror=reject;
+  im.src=URL.createObjectURL(blob);
+ })));
+ const side=Math.min(...imgs.map(im=>Math.min(im.naturalWidth,im.naturalHeight)));
+ const border=64, gap=8, allowance=180;
+ const c=document.createElement("canvas");
+ c.width=side+border*2;
+ c.height=side*3+gap*2+border*2+allowance;
+ const x=c.getContext("2d");
+ x.fillStyle="#fff";
+ x.fillRect(0,0,c.width,c.height);
+ imgs.forEach((im,i)=>{
+  const srcSide=Math.min(im.naturalWidth,im.naturalHeight);
+  const sx=Math.floor((im.naturalWidth-srcSide)/2);
+  const sy=Math.floor((im.naturalHeight-srcSide)/2);
+  const y=border+i*(side+gap);
+  x.drawImage(im,sx,sy,srcSide,srcSide,border,y,side,side);
+ });
+ return await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+}
+
 async function shareSquarePhotos(){
-  const combined=await makeCombinedThreePhoto();
-  if(!combined)return;
-  $("threePhotoCombined").src=URL.createObjectURL(combined);
-  $("threePhotoCombined").style.display="block";
-  $("squareFunPrint").disabled=false;
-  const file=new File([combined],"nadayoji-3-square-photos.png",{type:"image/png"});
-  if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
-    try{
-      await navigator.share({
-        files:[file],
-        title:"NADAYOJI CAMS — 3 Square Photos",
-        text:"Three square photos with a white border."
-      });
-      setStatus("[ ONE 3-PHOTO IMAGE SAVED ♡ ]");
-      return;
-    }catch(e){if(e && e.name==="AbortError")return;}
-  }
-  setStatus("[ COMBINED PHOTO READY — TAP SAVE 3 PHOTOS ]");
+ const combined=await makeFunPrintThreePhoto();
+ if(!combined)return;
+ const file=new File([combined],"nadayoji-3-square-photos-funprint.png",{type:"image/png"});
+ if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+  try{
+   await navigator.share({
+    files:[file],
+    title:"NADAYOJI CAMS — 3 Square Photos",
+    text:"Three square photos with doubled white borders."
+   });
+   setStatus("[ 3 PHOTOS SENT TO FUN PRINT ♡ ]");
+   return;
+  }catch(e){if(e && e.name==="AbortError")return;}
+ }
+ setStatus("[ SHARE UNAVAILABLE — USE SAVE PHOTO ]");
 }
 
 async function saveSquarePhotos(){
