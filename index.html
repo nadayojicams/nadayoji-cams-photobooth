@@ -614,7 +614,7 @@ async function makeFunPrintThreePhoto(){
   im.src=URL.createObjectURL(blob);
  })));
  const side=Math.min(...imgs.map(im=>Math.min(im.naturalWidth,im.naturalHeight)));
- const border=64, gap=8, allowance=180;
+ const border=128, gap=16, allowance=180;
  const c=document.createElement("canvas");
  c.width=side+border*2;
  c.height=side*3+gap*2+border*2+allowance;
