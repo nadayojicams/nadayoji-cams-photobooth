@@ -822,7 +822,7 @@ async function takePhoto(){
 
 function buildReceipt(photoBlob){
   // The receipt is rendered once. The preview and downloaded file are the SAME PNG.
-  const W=768, PAD=50, MAX_PHOTO_W=W-PAD*2;
+  const W=800, PAD=28, MAX_PHOTO_W=W-PAD*2;
   const canvas=printCanvas;
   const ctx=canvas.getContext("2d");
   ctx.imageSmoothingEnabled=true;
@@ -842,7 +842,7 @@ function buildReceipt(photoBlob){
     ctx.fillStyle="#000"; ctx.textAlign="center"; ctx.textBaseline="alphabetic";
     // Render at 2x the printer dot width (768px) so Mobile Print Util can downsample to 384 dots cleanly.
     // This keeps the same physical receipt layout while giving the printer a sharper source image.
-    ctx.scale(0.96,0.96);
+    ctx.scale(1,1);
 
     const center=W/2;
     const rule=()=>{
@@ -873,20 +873,20 @@ function buildReceipt(photoBlob){
 
     // NADAYOJI logo — preserve the complete 1:1 square artwork.
     // The source asset is 500x500; draw the entire asset into a square with no crop.
-    const logoSize=160;
+    const logoSize=150;
     const logoX=center-logoSize/2, logoY=25;
     // Keep the generated receipt logo compact and fully separated from the title.
     ctx.drawImage(logo,logoX,logoY,logoSize,logoSize);
 
     let y=logoY+logoSize+40;
     rule(); y+=30;
-    txt("✦ PHOTO RECEIPT ✦",y,56,900); y+=64;
+    txt("✦ PHOTO RECEIPT ✦",y,58,900); y+=72;
 
     // Photo: preserve the exact source ratio, no stretching and no gray bars.
     const pw=photo.width, ph=photo.height;
     const scale=MAX_PHOTO_W/pw;
     const drawW=MAX_PHOTO_W, drawH=ph*scale;
-    const maxPhotoH=780;
+    const maxPhotoH=900;
     const finalScale=Math.min(1, maxPhotoH/drawH);
     const fw=pw*scale*finalScale, fh=ph*scale*finalScale;
     ctx.drawImage(photo,center-fw/2,y,fw,fh);
@@ -894,7 +894,7 @@ function buildReceipt(photoBlob){
 
     ctx.textAlign="left";
     ctx.fillStyle="#000";
-    ctx.font="900 48px Arial, Helvetica, sans-serif";
+    ctx.font="900 50px Arial, Helvetica, sans-serif";
     const details=[
       ["DATE",$("rDate").textContent],
       ["TIME",$("rTime").textContent],
@@ -904,27 +904,27 @@ function buildReceipt(photoBlob){
     for(const [k,v] of details){
       ctx.fillText(k+" :",PAD,y);
       ctx.fillText(v,245,y);
-      y+=66;
+      y+=62;
     }
     y+=20; rule(); y+=40;
 
-    txt("ABOUT NADAYOJI CAMS",y,50,900); y+=60;
-    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,34,W-110,44);
+    txt("ABOUT NADAYOJI CAMS",y,48,900); y+=64;
+    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,31,W-90,40);
     y+=12;
-    y=wrap("Y2K memories brought back to life through cameras.",y,34,W-110,44);
+    y=wrap("Y2K memories brought back to life through cameras.",y,31,W-90,40);
     y+=20;
-    txt("Capture moments.",y,42,900); y+=50;
-    txt("Keep the memory.",y,42,900); y+=58;
+    txt("Capture moments.",y,40,900); y+=52;
+    txt("Keep the memory.",y,40,900); y+=58;
 
     rule(); y+=40;
-    txt("THANK YOU FOR SUPPORTING",y,42,900); y+=50;
-    txt("NADAYOJI CAMS!",y,52,900); y+=58;
-    txt("♥  KEEP THE MEMORY  ♡",y,44,900); y+=65;
+    txt("THANK YOU FOR SUPPORTING",y,40,900); y+=52;
+    txt("NADAYOJI CAMS!",y,48,900); y+=60;
+    txt("♥  KEEP THE MEMORY  ♡",y,40,900); y+=62;
 
-    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,38,900); y+=65;
+    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,34,900); y+=60;
     rule(); y+=40;
-    txt("MEMORIES FADE, PHOTOS DON'T.",y,44,900); y+=55;
-    txt("— NADAYOJI CAMS —",y,40,800); y+=65;
+    txt("MEMORIES FADE, PHOTOS DON'T.",y,40,900); y+=52;
+    txt("— NADAYOJI CAMS —",y,36,800); y+=58;
 
     // Crop the canvas exactly at the end of the content.
     const finalH=Math.ceil(y)+240;
