@@ -111,6 +111,18 @@ button:disabled{opacity:.35;cursor:not-allowed}
   height:auto !important;
   max-height:none !important;
 }
+/* Direct one-click system printing — no Shortcut required */
+@page{size:58mm auto;margin:0;}
+@media print{
+ html,body{margin:0 !important;padding:0 !important;width:58mm !important;min-width:58mm !important;background:#fff !important;}
+ body *{visibility:hidden !important;}
+ body.printing-receipt #receiptPaper,body.printing-receipt #receiptPaper *{visibility:visible !important;}
+ body.printing-square #threePhotoCombined,body.printing-square #threePhotoCombined *{visibility:visible !important;}
+ body.printing-receipt #receiptPaper{position:absolute !important;left:5mm !important;top:0 !important;width:48mm !important;max-width:48mm !important;min-width:48mm !important;margin:0 !important;padding:0 !important;overflow:visible !important;background:#fff !important;}
+ body.printing-receipt #receiptPaper img,body.printing-receipt #receiptPaper canvas{width:48mm !important;max-width:48mm !important;height:auto !important;}
+ body.printing-square #threePhotoCombined{position:absolute !important;left:5mm !important;top:0 !important;width:48mm !important;max-width:48mm !important;height:auto !important;margin:0 !important;}
+}
+
 @media print{
   #receiptPaper{
     height:auto !important;
@@ -591,42 +603,36 @@ button:disabled{opacity:.35;cursor:not-allowed}
 #printReceipt, #squarePrint { pointer-events:auto !important; touch-action:manipulation !important; position:relative !important; z-index:20 !important; }
 #printReceipt:not(:disabled), #squarePrint:not(:disabled) { opacity:1 !important; cursor:pointer !important; }
 
-/* Direct one-click system printing: print only the finished receipt artwork. */
-@media print{
-  @page{size:58mm auto;margin:0;}
-  html,body{
-    width:58mm !important;
-    min-width:58mm !important;
-    margin:0 !important;
-    padding:0 !important;
-    background:#fff !important;
-  }
-  body *{visibility:hidden !important;}
-  #receiptPaper,#receiptPaper *{visibility:visible !important;}
-  #receiptPaper{
-    position:absolute !important;
-    left:50% !important;
-    top:0 !important;
-    transform:translateX(-50%) !important;
-    width:48mm !important;
-    max-width:48mm !important;
-    min-width:48mm !important;
-    margin:0 !important;
-    padding:0 !important;
-    overflow:visible !important;
-    background:#fff !important;
-  }
-  #receiptPaper canvas,#receiptCanvas,#receiptPaper img{
-    width:48mm !important;
-    max-width:48mm !important;
-    height:auto !important;
-    margin:0 auto !important;
-    display:block !important;
-  }
-}
+/* Physical-printing animation overlay */
+#printingOverlay{display:none;position:fixed;inset:0;z-index:99999;background:rgba(255,255,255,.94);align-items:center;justify-content:center;flex-direction:column;gap:18px;font-family:inherit;}
+#printingOverlay.active{display:flex;}
+.printerAnim{position:relative;width:230px;height:150px;}
+.printerBody{position:absolute;left:15px;right:15px;bottom:8px;height:82px;border:3px solid #111;border-radius:14px;background:#fff;box-shadow:0 8px 0 rgba(0,0,0,.08);}
+.printerSlot{position:absolute;left:34px;right:34px;top:50px;height:8px;border-radius:8px;background:#111;}
+.printerLight{position:absolute;right:34px;top:25px;width:10px;height:10px;border-radius:50%;background:#111;animation:printerBlink .8s infinite;}
+.printPaper{position:absolute;left:55px;top:18px;width:120px;height:118px;background:#fff;border:2px solid #111;box-sizing:border-box;transform:translateY(-82px);animation:paperFeed 2.2s ease-in-out infinite;}
+.printPaper:after{content:'NADAYOJI CAMS';position:absolute;left:10px;right:10px;top:20px;font-size:10px;text-align:center;letter-spacing:1px;border-bottom:1px solid #111;padding-bottom:7px;}
+.printPaper:before{content:'✦ PHOTO RECEIPT ✦';position:absolute;left:8px;right:8px;top:54px;font-size:8px;text-align:center;}
+.printText{font-size:16px;letter-spacing:2px;text-align:center;font-weight:700;}
+.printSub{font-size:12px;opacity:.65;text-align:center;}
+@keyframes paperFeed{0%{transform:translateY(-78px)}45%{transform:translateY(-12px)}100%{transform:translateY(48px)}}
+@keyframes printerBlink{50%{opacity:.25}}
+
 </style>
 </head>
 <body>
+
+<div id="printingOverlay" aria-hidden="true">
+  <div class="printerAnim" aria-hidden="true">
+    <div class="printPaper"></div>
+    <div class="printerBody"></div>
+    <div class="printerSlot"></div>
+    <div class="printerLight"></div>
+  </div>
+  <div class="printText">PRINTING ♡</div>
+  <div class="printSub">Please wait while your receipt is printing...</div>
+</div>
+
 <div class="app"><div class="wrap">
   <div class="top">
     <div class="brand">
@@ -719,7 +725,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
         <button id="printReceipt" class="primary" disabled>[ PRINT TO RPP02N ]</button>
         <button id="save" disabled>[ ⇩ SAVE RECEIPT ]</button>
       </div>
-      <div class="hint">PRINT saves the receipt and sends it directly to the printer.</div>
+      <div class="hint">PRINT saves the finished image and opens the printer system in one click.</div>
     </section>
   </div>
   <div class="footer">♡ NADAYOJI CAMS ♡</div>
@@ -733,7 +739,6 @@ const $=id=>document.getElementById(id);
 const video=$("video"),captured=$("captured"),count=$("count"),status=$("status");
 const start=$("start"),snap=$("snap"),retake=$("retake"),save=$("save"),printReceipt=$("printReceipt");
 const receiptPhoto=$("receiptPhoto"),photoCanvas=$("photoCanvas"),printCanvas=$("printCanvas");
-
 let stream=null,receiptBlob=null,lastPhotoBlob=null;
 
 const setStatus=t=>status.textContent=t;
@@ -945,9 +950,8 @@ function buildReceipt(photoBlob){
     // Crop the canvas exactly at the end of the content.
     const finalH=y;
     // One final receipt PNG is used for BOTH the on-screen preview and printing.
-    // Render at 2x so the print driver keeps the receipt at full width.
-    // The RPP02N has a 384-dot printable area.
-    const PRINT_W=768;
+    // 384 dots is the RPP02N's valid print width.
+    const PRINT_W=384;
     const PRINT_H=Math.round(finalH*(PRINT_W/W));
     const finalCanvas=document.createElement("canvas");
     finalCanvas.width=PRINT_W; finalCanvas.height=PRINT_H;
@@ -1019,22 +1023,35 @@ function retakePhoto(){
     setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
   }
 }
+function downloadReceiptBlob(blob, filename){
+ if(!blob)return false;
+ const u=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=u;a.download=filename;a.style.display="none";
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(u),5000);
+ return true;
+}
+function directPrint(target){
+ document.body.classList.remove("printing-receipt","printing-square");
+ document.body.classList.add(target==="square"?"printing-square":"printing-receipt");
+ const overlay=$("printingOverlay");
+ if(overlay){ overlay.classList.add("active"); overlay.setAttribute("aria-hidden","false"); }
+ setStatus("[ PRINTING ♡ ]");
+ // Give the animation one frame to appear before opening the system print dialog.
+ requestAnimationFrame(()=>setTimeout(()=>window.print(),120));
+ // Keep the physical-printing animation visible for the normal thermal-print cycle.
+ setTimeout(()=>{
+   if(overlay){ overlay.classList.remove("active"); overlay.setAttribute("aria-hidden","true"); }
+   document.body.classList.remove("printing-receipt","printing-square");
+   setStatus("[ PRINT COMPLETE ♡ ]");
+ },10000);
+ return true;
+}
 async function printReceiptImage(){
  if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;}
- // One-click workflow: save the finished receipt automatically, then invoke
- // the device's normal printer directly. No Shortcut is used.
- try{
-   const u=URL.createObjectURL(receiptBlob),a=document.createElement("a");
-   a.href=u;
-   a.download=`nadayoji-photo-receipt-${Date.now()}.png`;
-   a.style.display="none";
-   document.body.appendChild(a);
-   a.click();
-   a.remove();
-   setTimeout(()=>URL.revokeObjectURL(u),5000);
- }catch(e){console.log("Automatic receipt save failed",e);}
- setStatus("[ PRINTING ♡ ]");
- setTimeout(()=>window.print(),150);
+ downloadReceiptBlob(receiptBlob,`nadayoji-photo-receipt-${Date.now()}.png`);
+ setStatus("[ RECEIPT SAVED ♡ PRINTING... ]");
+ directPrint("receipt");
 }
 async function saveReceipt(){
  if(!receiptBlob)return;
@@ -1044,7 +1061,7 @@ async function saveReceipt(){
  setStatus("[ RECEIPT SAVED ♡ ]");
  setTimeout(()=>URL.revokeObjectURL(u),1500);
 }
-async function shareReceipt(){if(receiptBlob)await printReceiptImage();}
+async function shareReceipt(){if(receiptBlob){downloadReceiptBlob(receiptBlob,`nadayoji-photo-receipt-${Date.now()}.png`);directPrint("receipt");}}
 
 $("cameraFallback").addEventListener("change",e=>{
  const file=e.target.files&&e.target.files[0]; if(!file)return;
@@ -1196,12 +1213,9 @@ async function makeFunPrintThreePhoto(){
 async function printSquarePhotos(){
  const combined=await makeCombinedThreePhoto();
  if(!combined)return;
- const u=URL.createObjectURL(combined),a=document.createElement("a");
- a.href=u;a.download=`nadayoji-3-square-photos-${Date.now()}.png`;
- document.body.appendChild(a);a.click();a.remove();
- setTimeout(()=>URL.revokeObjectURL(u),5000);
- setStatus("[ PRINTING ♡ ]");
- setTimeout(()=>window.print(),150);
+ downloadReceiptBlob(combined,`nadayoji-3-square-photos-${Date.now()}.png`);
+ setStatus("[ 3 PHOTOS SAVED ♡ PRINTING... ]");
+ directPrint("square");
 }
 
 async function saveSquarePhotos(){
