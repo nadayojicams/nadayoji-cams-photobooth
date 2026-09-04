@@ -846,7 +846,7 @@ function buildReceipt(photoBlob){
 
     const center=W/2;
     const rule=()=>{
-      ctx.strokeStyle="#000"; ctx.lineWidth=3; ctx.setLineDash([12,10]);
+      ctx.strokeStyle="#000"; ctx.lineWidth=2; ctx.setLineDash([12,10]);
       ctx.beginPath(); ctx.moveTo(PAD,0); ctx.lineTo(W-PAD,0); ctx.stroke();
       ctx.setLineDash([]);
     };
@@ -880,13 +880,13 @@ function buildReceipt(photoBlob){
 
     let y=logoY+logoSize+40;
     rule(); y+=30;
-    txt("✦ PHOTO RECEIPT ✦",y,64,900); y+=55;
+    txt("✦ PHOTO RECEIPT ✦",y,56,900); y+=64;
 
     // Photo: preserve the exact source ratio, no stretching and no gray bars.
     const pw=photo.width, ph=photo.height;
     const scale=MAX_PHOTO_W/pw;
     const drawW=MAX_PHOTO_W, drawH=ph*scale;
-    const maxPhotoH=860;
+    const maxPhotoH=780;
     const finalScale=Math.min(1, maxPhotoH/drawH);
     const fw=pw*scale*finalScale, fh=ph*scale*finalScale;
     ctx.drawImage(photo,center-fw/2,y,fw,fh);
@@ -894,7 +894,7 @@ function buildReceipt(photoBlob){
 
     ctx.textAlign="left";
     ctx.fillStyle="#000";
-    ctx.font="900 54px Arial, Helvetica, sans-serif";
+    ctx.font="900 48px Arial, Helvetica, sans-serif";
     const details=[
       ["DATE",$("rDate").textContent],
       ["TIME",$("rTime").textContent],
@@ -904,21 +904,21 @@ function buildReceipt(photoBlob){
     for(const [k,v] of details){
       ctx.fillText(k+" :",PAD,y);
       ctx.fillText(v,245,y);
-      y+=72;
+      y+=66;
     }
     y+=20; rule(); y+=40;
 
-    txt("ABOUT NADAYOJI CAMS",y,56,900); y+=55;
-    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,38,W-110,50);
+    txt("ABOUT NADAYOJI CAMS",y,50,900); y+=60;
+    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,34,W-110,44);
     y+=12;
-    y=wrap("Y2K memories brought back to life through cameras.",y,38,W-110,50);
+    y=wrap("Y2K memories brought back to life through cameras.",y,34,W-110,44);
     y+=20;
-    txt("Capture moments.",y,46,900); y+=55;
-    txt("Keep the memory.",y,46,900); y+=65;
+    txt("Capture moments.",y,42,900); y+=50;
+    txt("Keep the memory.",y,42,900); y+=58;
 
     rule(); y+=40;
-    txt("THANK YOU FOR SUPPORTING",y,46,900); y+=55;
-    txt("NADAYOJI CAMS!",y,58,900); y+=60;
+    txt("THANK YOU FOR SUPPORTING",y,42,900); y+=50;
+    txt("NADAYOJI CAMS!",y,52,900); y+=58;
     txt("♥  KEEP THE MEMORY  ♡",y,44,900); y+=65;
 
     txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,38,900); y+=65;
@@ -927,8 +927,8 @@ function buildReceipt(photoBlob){
     txt("— NADAYOJI CAMS —",y,40,800); y+=65;
 
     // Crop the canvas exactly at the end of the content.
-    const finalH=Math.ceil(y)+180;
-    // One final receipt PNG is used for BOTH the on-screen preview and printing.
+    const finalH=Math.ceil(y)+240;
+    // One final compressed receipt image is used for BOTH the on-screen preview and printing. JPEG compression reduces Bluetooth payload size and helps prevent printer pauses/line gaps.
     // Keep the original receipt artwork size. No printer dot-width is forced here.
     // Mobile Print Util handles the final paper-width fitting.
     const PRINT_W=W;
@@ -962,7 +962,7 @@ function buildReceipt(photoBlob){
       save.disabled=false;
       printReceipt.disabled=true;
       /* share button removed */
-    },"image/png");
+    },"image/jpeg",0.72);
   }
 
   logo.onload=ready;
