@@ -590,6 +590,40 @@ button:disabled{opacity:.35;cursor:not-allowed}
 /* Final print interaction */
 #printReceipt, #squarePrint { pointer-events:auto !important; touch-action:manipulation !important; position:relative !important; z-index:20 !important; }
 #printReceipt:not(:disabled), #squarePrint:not(:disabled) { opacity:1 !important; cursor:pointer !important; }
+
+/* Direct one-click system printing: print only the finished receipt artwork. */
+@media print{
+  @page{size:58mm auto;margin:0;}
+  html,body{
+    width:58mm !important;
+    min-width:58mm !important;
+    margin:0 !important;
+    padding:0 !important;
+    background:#fff !important;
+  }
+  body *{visibility:hidden !important;}
+  #receiptPaper,#receiptPaper *{visibility:visible !important;}
+  #receiptPaper{
+    position:absolute !important;
+    left:50% !important;
+    top:0 !important;
+    transform:translateX(-50%) !important;
+    width:48mm !important;
+    max-width:48mm !important;
+    min-width:48mm !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+    background:#fff !important;
+  }
+  #receiptPaper canvas,#receiptCanvas,#receiptPaper img{
+    width:48mm !important;
+    max-width:48mm !important;
+    height:auto !important;
+    margin:0 auto !important;
+    display:block !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -685,7 +719,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
         <button id="printReceipt" class="primary" disabled>[ PRINT TO RPP02N ]</button>
         <button id="save" disabled>[ ⇩ SAVE RECEIPT ]</button>
       </div>
-      <div class="hint">PRINT sends the finished image to the NADAYOJI PRINT shortcut.</div>
+      <div class="hint">PRINT saves the receipt and sends it directly to the printer.</div>
     </section>
   </div>
   <div class="footer">♡ NADAYOJI CAMS ♡</div>
@@ -699,7 +733,7 @@ const $=id=>document.getElementById(id);
 const video=$("video"),captured=$("captured"),count=$("count"),status=$("status");
 const start=$("start"),snap=$("snap"),retake=$("retake"),save=$("save"),printReceipt=$("printReceipt");
 const receiptPhoto=$("receiptPhoto"),photoCanvas=$("photoCanvas"),printCanvas=$("printCanvas");
-const NADAYOJI_PRINT_SHORTCUT="NADAYOJI PRINT";
+
 let stream=null,receiptBlob=null,lastPhotoBlob=null;
 
 const setStatus=t=>status.textContent=t;
@@ -911,8 +945,8 @@ function buildReceipt(photoBlob){
     // Crop the canvas exactly at the end of the content.
     const finalH=y;
     // One final receipt PNG is used for BOTH the on-screen preview and printing.
-    // Render at 2x so the Bluetooth print shortcut does not scale the receipt down to half-size.
-    // The RPP02N prints 384 dots wide; the shortcut scales this 768px artwork to the full printable width.
+    // Render at 2x so the print driver keeps the receipt at full width.
+    // The RPP02N has a 384-dot printable area.
     const PRINT_W=768;
     const PRINT_H=Math.round(finalH*(PRINT_W/W));
     const finalCanvas=document.createElement("canvas");
@@ -985,19 +1019,10 @@ function retakePhoto(){
     setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
   }
 }
-function sendToNadayojiPrint(blob,label){
- if(!blob){setStatus("[ NOTHING TO PRINT YET ]");return false;}
- const url="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
- setStatus("[ PRINTING ♡ ]");
- window.location.href=url;
- return true;
-}
-
 async function printReceiptImage(){
  if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;}
- // One-tap workflow: save the COMPLETE receipt artwork (photo + receipt layout)
- // as one PNG, then launch the already-working printer Shortcut. No Save/Share
- // sheet is shown.
+ // One-click workflow: save the finished receipt automatically, then invoke
+ // the device's normal printer directly. No Shortcut is used.
  try{
    const u=URL.createObjectURL(receiptBlob),a=document.createElement("a");
    a.href=u;
@@ -1007,9 +1032,9 @@ async function printReceiptImage(){
    a.click();
    a.remove();
    setTimeout(()=>URL.revokeObjectURL(u),5000);
-   setStatus("[ RECEIPT SAVED ♡ PRINTING... ]");
  }catch(e){console.log("Automatic receipt save failed",e);}
- await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");
+ setStatus("[ PRINTING ♡ ]");
+ setTimeout(()=>window.print(),150);
 }
 async function saveReceipt(){
  if(!receiptBlob)return;
@@ -1019,7 +1044,7 @@ async function saveReceipt(){
  setStatus("[ RECEIPT SAVED ♡ ]");
  setTimeout(()=>URL.revokeObjectURL(u),1500);
 }
-async function shareReceipt(){if(receiptBlob)await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");}
+async function shareReceipt(){if(receiptBlob)await printReceiptImage();}
 
 $("cameraFallback").addEventListener("change",e=>{
  const file=e.target.files&&e.target.files[0]; if(!file)return;
@@ -1171,7 +1196,12 @@ async function makeFunPrintThreePhoto(){
 async function printSquarePhotos(){
  const combined=await makeCombinedThreePhoto();
  if(!combined)return;
- await sendToNadayojiPrint(combined,"nadayoji-3-square-photos.png");
+ const u=URL.createObjectURL(combined),a=document.createElement("a");
+ a.href=u;a.download=`nadayoji-3-square-photos-${Date.now()}.png`;
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(u),5000);
+ setStatus("[ PRINTING ♡ ]");
+ setTimeout(()=>window.print(),150);
 }
 
 async function saveSquarePhotos(){
