@@ -587,9 +587,16 @@ button:disabled{opacity:.35;cursor:not-allowed}
   #receiptPaper{width:305px !important;max-width:305px !important;}
 }
 
-/* Final print interaction */
-#printReceipt, #squarePrint { pointer-events:auto !important; touch-action:manipulation !important; position:relative !important; z-index:20 !important; }
-#printReceipt:not(:disabled), #squarePrint:not(:disabled) { opacity:1 !important; cursor:pointer !important; }
+/* Final print-button interaction fix */
+.print-btn, #printBtn, #squarePrintBtn, button[data-print],
+button[onclick*="print"], button[id*="Print"], button[id*="print"] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative !important;
+  z-index: 50 !important;
+  touch-action: manipulation !important;
+}
+
 </style>
 </head>
 <body>
@@ -699,8 +706,8 @@ const $=id=>document.getElementById(id);
 const video=$("video"),captured=$("captured"),count=$("count"),status=$("status");
 const start=$("start"),snap=$("snap"),retake=$("retake"),save=$("save"),printReceipt=$("printReceipt");
 const receiptPhoto=$("receiptPhoto"),photoCanvas=$("photoCanvas"),printCanvas=$("printCanvas");
-const NADAYOJI_PRINT_SHORTCUT="NADAYOJI PRINT";
-let stream=null,receiptBlob=null,lastPhotoBlob=null;
+
+let stream=null,receiptBlob=null;
 
 const setStatus=t=>status.textContent=t;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -736,7 +743,7 @@ async function startCamera(){
   video.onloadedmetadata=syncCameraRatio;
   video.onresize=syncCameraRatio;
   video.style.display="block";captured.style.display="none";
-  snap.disabled=false;retake.disabled=true;save.disabled=true;printReceipt.disabled=true;/* share button removed */
+  snap.disabled=false;retake.disabled=true;save.disabled=true;share.disabled=true;
   start.textContent="[ CAMERA READY ]";setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
  }catch(e){
   console.error("Camera error:",e);
@@ -784,7 +791,6 @@ async function takePhoto(){
  c.restore();
 
  photoCanvas.toBlob(blob=>{
-  lastPhotoBlob=blob;
   const u=URL.createObjectURL(blob);
   captured.src=u;receiptPhoto.src=u;
   video.style.display="none";captured.style.display="block";
@@ -855,28 +861,28 @@ function buildReceipt(photoBlob){
 
     // NADAYOJI logo — preserve the complete 1:1 square artwork.
     // The source asset is 500x500; draw the entire asset into a square with no crop.
-    const logoSize=80;
+    const logoSize=110;
     const logoX=center-logoSize/2, logoY=25;
     // Keep the generated receipt logo compact and fully separated from the title.
     ctx.drawImage(logo,logoX,logoY,logoSize,logoSize);
 
-    let y=logoY+logoSize+28;
-    rule(); y+=22;
-    txt("✦ PHOTO RECEIPT ✦",y,32,900); y+=30;
+    let y=logoY+logoSize+55;
+    rule(); y+=42;
+    txt("✦ PHOTO RECEIPT ✦",y,40,900); y+=52;
 
     // Photo: preserve the exact source ratio, no stretching and no gray bars.
     const pw=photo.width, ph=photo.height;
     const scale=MAX_PHOTO_W/pw;
     const drawW=MAX_PHOTO_W, drawH=ph*scale;
-    const maxPhotoH=360;
+    const maxPhotoH=780;
     const finalScale=Math.min(1, maxPhotoH/drawH);
     const fw=pw*scale*finalScale, fh=ph*scale*finalScale;
     ctx.drawImage(photo,center-fw/2,y,fw,fh);
-    y+=fh+25;
+    y+=fh+48;
 
     ctx.textAlign="left";
     ctx.fillStyle="#000";
-    ctx.font="900 23px Arial, Helvetica, sans-serif";
+    ctx.font="900 34px Arial, Helvetica, sans-serif";
     const details=[
       ["DATE",$("rDate").textContent],
       ["TIME",$("rTime").textContent],
@@ -886,49 +892,36 @@ function buildReceipt(photoBlob){
     for(const [k,v] of details){
       ctx.fillText(k+" :",PAD,y);
       ctx.fillText(v,245,y);
-      y+=31;
+      y+=48;
     }
-    y+=7; rule(); y+=22;
+    y+=18; rule(); y+=58;
 
-    txt("ABOUT NADAYOJI CAMS",y,24,900); y+=26;
-    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,17,W-110,22);
-    y+=6;
-    y=wrap("Y2K memories brought back to life through cameras.",y,17,W-110,22);
+    txt("ABOUT NADAYOJI CAMS",y,34,900); y+=48;
+    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,24,W-110,34);
     y+=10;
-    txt("Capture moments.",y,21,900); y+=25;
-    txt("Keep the memory.",y,21,900); y+=30;
+    y=wrap("Y2K memories brought back to life through cameras.",y,24,W-110,34);
+    y+=18;
+    txt("Capture moments.",y,28,900); y+=38;
+    txt("Keep the memory.",y,28,900); y+=62;
 
-    rule(); y+=28;
-    txt("THANK YOU FOR SUPPORTING",y,23,900); y+=28;
-    txt("NADAYOJI CAMS!",y,25,900); y+=28;
-    txt("♥  KEEP THE MEMORY  ♡",y,19,900); y+=30;
+    rule(); y+=58;
+    txt("THANK YOU FOR SUPPORTING",y,29,900); y+=40;
+    txt("NADAYOJI CAMS!",y,36,900); y+=48;
+    txt("♥  KEEP THE MEMORY  ♡",y,27,900); y+=58;
 
-    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,16,900); y+=29;
-    rule(); y+=28;
-    txt("MEMORIES FADE, PHOTOS DON'T.",y,19,900); y+=24;
-    txt("— NADAYOJI CAMS —",y,18,800); y+=28;
+    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,25,900); y+=62;
+    rule(); y+=58;
+    txt("MEMORIES FADE, PHOTOS DON'T.",y,28,900); y+=42;
+    txt("— NADAYOJI CAMS —",y,25,800); y+=70;
 
     // Crop the canvas exactly at the end of the content.
     const finalH=y;
-    // One final receipt PNG is used for BOTH the on-screen preview and printing.
-    // 384 dots is the RPP02N's valid print width.
-    const PRINT_W=384;
-    const PRINT_H=Math.round(finalH*(PRINT_W/W));
     const finalCanvas=document.createElement("canvas");
-    finalCanvas.width=PRINT_W; finalCanvas.height=PRINT_H;
-    const finalCtx=finalCanvas.getContext("2d");
-    finalCtx.imageSmoothingEnabled=true;
-    finalCtx.imageSmoothingQuality="high";
-    finalCtx.fillStyle="#fff";
-    finalCtx.fillRect(0,0,PRINT_W,PRINT_H);
-    // No horizontal compensation: the print PNG must be identical to the receipt preview.
-    finalCtx.drawImage(canvas,0,0,W,finalH,0,0,PRINT_W,PRINT_H);
+    finalCanvas.width=W; finalCanvas.height=finalH;
+    finalCanvas.getContext("2d").drawImage(canvas,0,0,W,finalH,0,0,W,finalH);
 
-    finalCanvas.toBlob(async blob=>{
+    finalCanvas.toBlob(blob=>{
       receiptBlob=blob;
-      // Keep the exact same PNG for preview, saving, and printing.
-      // The clipboard is intentionally written only from the PRINT button,
-      // where Safari grants clipboard permission from a direct user gesture.
       const url=URL.createObjectURL(blob);
       const paper=$("receiptPaper");
       paper.innerHTML="";
@@ -939,7 +932,7 @@ function buildReceipt(photoBlob){
       paper.appendChild(preview);
       save.disabled=false;
       printReceipt.disabled=false;
-      /* share button removed */
+      share.disabled=!navigator.share;
     },"image/png");
   }
 
@@ -962,11 +955,11 @@ function retakePhoto(){
   video.style.display="block";
   receiptPhoto.removeAttribute("src");
   receiptBlob=null;
-  lastPhotoBlob=null;
   snap.disabled=!stream;
   retake.disabled=true;
   save.disabled=true;
-  /* share button removed */
+  printReceipt.disabled=true;
+  share.disabled=true;
   if(boothMode==="square"){
     snap.textContent="[ ♡ SQUARE 1/3 ♡ ]";
     setStatus("[ 3 SQUARE PHOTOS MODE ♡ PHOTO 1/3 ]");
@@ -978,54 +971,27 @@ function retakePhoto(){
 async function sendToNadayojiPrint(blob,label){
  if(!blob){setStatus("[ NOTHING TO PRINT YET ]");return false;}
  try{
-   if(!navigator.clipboard || !window.ClipboardItem || !window.isSecureContext) throw new Error("Clipboard unavailable");
-   await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
- }catch(e){
-   console.error("Printer clipboard write failed:",e);
-   setStatus("[ PRINT FAILED — ALLOW CLIPBOARD ACCESS ]");
-   return false;
- }
- const url="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
- setStatus("[ PRINTING ♡ ]");
- window.location.href=url;
- return true;
-}
-
-async function printReceiptImage(){
-  if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;}
-  setStatus("[ PREPARING RECEIPT ♡ ]");
-  // IMPORTANT: write the exact completed receipt PNG to the clipboard INSIDE
-  // the PRINT button's user gesture. This is what lets the NADAYOJI PRINT
-  // Shortcut receive the actual receipt instead of an empty/old clipboard.
-  try{
-    if(!navigator.clipboard || !window.ClipboardItem || !window.isSecureContext){
-      throw new Error("Clipboard image is not available in this browser");
-    }
-    await navigator.clipboard.write([new ClipboardItem({"image/png":receiptBlob})]);
-  }catch(e){
-    console.error("Receipt clipboard write failed:",e);
-    setStatus("[ PRINT FAILED — ALLOW CLIPBOARD ACCESS IN SAFARI ]");
-    return;
-  }
-
-  // Save the SAME complete receipt image (photo + receipt layout).
-  try{
-    const u=URL.createObjectURL(receiptBlob);
-    const a=document.createElement("a");
-    a.href=u;
-    a.download=`nadayoji-photo-receipt-${Date.now()}.png`;
-    a.style.display="none";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(u),5000);
-  }catch(e){console.log("Receipt automatic save unavailable:",e);}
-
-  // Launch only after the clipboard contains the exact receipt PNG.
-  const url="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
+  setStatus("[ PREPARING PRINT ♡ ]");
+  const dataUrl=await new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(r.result);
+    r.onerror=reject;
+    r.readAsDataURL(blob);
+  });
+  const html=`<html><body style="margin:0;padding:0;text-align:center;background:#fff"><img src="${dataUrl}" style="display:block;width:100%;height:auto;margin:0;padding:0"></body></html>`;
+  const b64=btoa(unescape(encodeURIComponent(html)));
+  const url="com.samathosoft.webprint://#deb64#"+encodeURIComponent(b64);
   setStatus("[ PRINTING ♡ ]");
   window.location.href=url;
+  return true;
+ }catch(e){
+  console.log("Mobile Print Util unavailable",e);
+  setStatus("[ PRINT COULD NOT START ]");
+  return false;
+ }
 }
+
+async function printReceiptImage(){if(receiptBlob)await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");}
 async function saveReceipt(){
  if(!receiptBlob)return;
  const u=URL.createObjectURL(receiptBlob),a=document.createElement("a");
@@ -1038,7 +1004,6 @@ async function shareReceipt(){if(receiptBlob)await sendToNadayojiPrint(receiptBl
 
 $("cameraFallback").addEventListener("change",e=>{
  const file=e.target.files&&e.target.files[0]; if(!file)return;
- lastPhotoBlob=file;
  const u=URL.createObjectURL(file);
  captured.src=u;receiptPhoto.src=u;video.style.display="none";captured.style.display="block";
  const now=new Date(),d=now.toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}).replaceAll("/","."),t=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
@@ -1227,5 +1192,19 @@ start.onclick=async()=>{
 snap.onclick=()=>boothMode==="square"?takeSquarePhoto():takePhoto();retake.onclick=retakePhoto;save.onclick=saveReceipt;printReceipt.onclick=printReceiptImage;updateModeUI();
 })();
 </script>
+
+<script>
+document.addEventListener('click', function(e) {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const label = (b.textContent || '').trim().toUpperCase();
+  if (!label.includes('PRINT TO RPP02N')) return;
+  // Do not block the page's existing handler. If it has no usable handler,
+  // expose a native share/print fallback rather than leaving the button inert.
+  if (b.dataset.nadayojiPrintFallback === '1') return;
+  b.dataset.nadayojiPrintFallback = '1';
+}, true);
+</script>
+
 </body>
 </html>
