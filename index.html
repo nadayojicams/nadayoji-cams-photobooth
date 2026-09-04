@@ -3,7 +3,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="mobile-print-util-mode" content="one-click-imageurl">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -28,8 +27,6 @@ radial-gradient(circle at 50% 38%,rgba(255,60,180,.17),transparent 35%),
 .panel{border:1px solid #542044;background:rgba(8,6,8,.75);padding:14px;box-shadow:0 0 25px rgba(255,60,180,.08)}
  .camera{background:#000;border:2px solid var(--pink);position:relative;overflow:hidden;width:75vw;max-width:75%;height:auto;margin-left:auto;margin-right:auto}
 video,.captured{width:100%;height:auto;aspect-ratio:var(--camera-ratio,4/3);object-fit:contain;display:block;background:#000}
-/* Fix live front-camera preview: normal selfie orientation. Do not mirror captured/printed photos. */
-#video{transform:scaleX(-1);transform-origin:center;}
 .captured{display:none;object-fit:contain;background:#000}
 .scan{position:absolute;inset:12px;border:1px solid rgba(255,130,210,.4);pointer-events:none}
 .scan:before,.scan:after{content:"";position:absolute;width:28px;height:28px;border-color:#ff6fc2}
@@ -664,7 +661,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
       <canvas id="threePhotoCanvas" class="hidden"></canvas>
       <img id="threePhotoCombined" class="three-photo-combined" alt="Three square photos with white border" style="display:none">
       <div class="receipt-actions square-actions">
-        <button id="squarePrint" class="primary" disabled>[ PRINT ♡ ]</button>
+        <button id="squarePrint" class="primary" disabled>[ PRINT TO RPP02N ]</button>
         <button id="squareSave" disabled>[ ⇩ SAVE 3 PHOTOS ]</button>
       </div>
     </section>
@@ -696,7 +693,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
       </div>
 
       <div class="receipt-actions">
-        <button id="printReceipt" class="primary" disabled>[ PRINT ♡ ]</button>
+        <button id="printReceipt" class="primary" disabled>[ PRINT TO RPP02N ]</button>
         <button id="save" disabled>[ ⇩ SAVE RECEIPT ]</button>
       </div>
       <div class="hint">PRINT automatically saves the receipt, shows the printing animation, then sends the exact receipt to Mobile Print Util → RPP02N.</div>
@@ -822,12 +819,11 @@ async function takePhoto(){
 
 function buildReceipt(photoBlob){
   // The receipt is rendered once. The preview and downloaded file are the SAME PNG.
-  const W=800, PAD=28, MAX_PHOTO_W=W-PAD*2;
+  const W=800, PAD=52, MAX_PHOTO_W=W-PAD*2;
   const canvas=printCanvas;
   const ctx=canvas.getContext("2d");
   ctx.imageSmoothingEnabled=true;
   ctx.imageSmoothingQuality="high";
-  ctx.filter="none";
 
   const logo=new Image(), photo=new Image();
   let readyCount=0;
@@ -840,13 +836,10 @@ function buildReceipt(photoBlob){
     canvas.width=W; canvas.height=3200;
     ctx.fillStyle="#fff"; ctx.fillRect(0,0,W,canvas.height);
     ctx.fillStyle="#000"; ctx.textAlign="center"; ctx.textBaseline="alphabetic";
-    // Render at 2x the printer dot width (768px) so Mobile Print Util can downsample to 384 dots cleanly.
-    // This keeps the same physical receipt layout while giving the printer a sharper source image.
-    ctx.scale(1,1);
 
     const center=W/2;
     const rule=()=>{
-      ctx.strokeStyle="#000"; ctx.lineWidth=2; ctx.setLineDash([12,10]);
+      ctx.strokeStyle="#000"; ctx.lineWidth=3; ctx.setLineDash([12,10]);
       ctx.beginPath(); ctx.moveTo(PAD,0); ctx.lineTo(W-PAD,0); ctx.stroke();
       ctx.setLineDash([]);
     };
@@ -873,28 +866,28 @@ function buildReceipt(photoBlob){
 
     // NADAYOJI logo — preserve the complete 1:1 square artwork.
     // The source asset is 500x500; draw the entire asset into a square with no crop.
-    const logoSize=150;
+    const logoSize=80;
     const logoX=center-logoSize/2, logoY=25;
     // Keep the generated receipt logo compact and fully separated from the title.
     ctx.drawImage(logo,logoX,logoY,logoSize,logoSize);
 
-    let y=logoY+logoSize+40;
-    rule(); y+=30;
-    txt("✦ PHOTO RECEIPT ✦",y,58,900); y+=72;
+    let y=logoY+logoSize+28;
+    rule(); y+=22;
+    txt("✦ PHOTO RECEIPT ✦",y,32,900); y+=30;
 
     // Photo: preserve the exact source ratio, no stretching and no gray bars.
     const pw=photo.width, ph=photo.height;
     const scale=MAX_PHOTO_W/pw;
     const drawW=MAX_PHOTO_W, drawH=ph*scale;
-    const maxPhotoH=900;
+    const maxPhotoH=430;
     const finalScale=Math.min(1, maxPhotoH/drawH);
     const fw=pw*scale*finalScale, fh=ph*scale*finalScale;
     ctx.drawImage(photo,center-fw/2,y,fw,fh);
-    y+=fh+40;
+    y+=fh+25;
 
     ctx.textAlign="left";
     ctx.fillStyle="#000";
-    ctx.font="900 50px Arial, Helvetica, sans-serif";
+    ctx.font="900 27px Arial, Helvetica, sans-serif";
     const details=[
       ["DATE",$("rDate").textContent],
       ["TIME",$("rTime").textContent],
@@ -904,35 +897,34 @@ function buildReceipt(photoBlob){
     for(const [k,v] of details){
       ctx.fillText(k+" :",PAD,y);
       ctx.fillText(v,245,y);
-      y+=62;
+      y+=36;
     }
-    y+=20; rule(); y+=40;
+    y+=10; rule(); y+=28;
 
-    txt("ABOUT NADAYOJI CAMS",y,48,900); y+=64;
-    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,31,W-90,40);
-    y+=12;
-    y=wrap("Y2K memories brought back to life through cameras.",y,31,W-90,40);
-    y+=20;
-    txt("Capture moments.",y,40,900); y+=52;
-    txt("Keep the memory.",y,40,900); y+=58;
+    txt("ABOUT NADAYOJI CAMS",y,28,900); y+=30;
+    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,19,W-110,25);
+    y+=6;
+    y=wrap("Y2K memories brought back to life through cameras.",y,19,W-110,25);
+    y+=10;
+    txt("Capture moments.",y,23,900); y+=28;
+    txt("Keep the memory.",y,23,900); y+=35;
 
-    rule(); y+=40;
-    txt("THANK YOU FOR SUPPORTING",y,40,900); y+=52;
-    txt("NADAYOJI CAMS!",y,48,900); y+=60;
-    txt("♥  KEEP THE MEMORY  ♡",y,40,900); y+=62;
+    rule(); y+=28;
+    txt("THANK YOU FOR SUPPORTING",y,23,900); y+=28;
+    txt("NADAYOJI CAMS!",y,29,900); y+=32;
+    txt("♥  KEEP THE MEMORY  ♡",y,22,900); y+=35;
 
-    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,34,900); y+=60;
-    rule(); y+=40;
-    txt("MEMORIES FADE, PHOTOS DON'T.",y,40,900); y+=52;
-    txt("— NADAYOJI CAMS —",y,36,800); y+=58;
+    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,19,900); y+=35;
+    rule(); y+=28;
+    txt("MEMORIES FADE, PHOTOS DON'T.",y,22,900); y+=28;
+    txt("— NADAYOJI CAMS —",y,20,800); y+=35;
 
     // Crop the canvas exactly at the end of the content.
-    const finalH=Math.ceil(y)+240;
-    // One final compressed receipt image is used for BOTH the on-screen preview and printing. JPEG compression reduces Bluetooth payload size and helps prevent printer pauses/line gaps.
-    // Keep the original receipt artwork size. No printer dot-width is forced here.
-    // Mobile Print Util handles the final paper-width fitting.
-    const PRINT_W=W;
-    const PRINT_H=finalH;
+    const finalH=y;
+    // One final receipt PNG is used for BOTH the on-screen preview and printing.
+    // 384 dots is the RPP02N's valid print width.
+    const PRINT_W=384;
+    const PRINT_H=Math.round(finalH*(PRINT_W/W));
     const finalCanvas=document.createElement("canvas");
     finalCanvas.width=PRINT_W; finalCanvas.height=PRINT_H;
     const finalCtx=finalCanvas.getContext("2d");
@@ -940,7 +932,7 @@ function buildReceipt(photoBlob){
     finalCtx.imageSmoothingQuality="high";
     finalCtx.fillStyle="#fff";
     finalCtx.fillRect(0,0,PRINT_W,PRINT_H);
-    // Preserve the original 800px receipt artwork without dot-width resampling.
+    // No horizontal compensation: the print PNG must be identical to the receipt preview.
     finalCtx.drawImage(canvas,0,0,W,finalH,0,0,PRINT_W,PRINT_H);
 
     finalCanvas.toBlob(async blob=>{
@@ -962,7 +954,7 @@ function buildReceipt(photoBlob){
       save.disabled=false;
       printReceipt.disabled=true;
       /* share button removed */
-    },"image/jpeg",0.72);
+    },"image/png");
   }
 
   logo.onload=ready;
@@ -1010,26 +1002,37 @@ function showPrinting(show){
  o.classList.toggle("show",!!show); o.setAttribute("aria-hidden",show?"false":"true");
 }
 function base64FromDataUrl(dataUrl){const comma=dataUrl.indexOf(",");return comma>=0?dataUrl.slice(comma+1):"";}
-function makeMobilePrintUrlFromDataUrl(dataUrl){
- if(!dataUrl || !/^data:image\/(png|jpeg|jpg);base64,/i.test(dataUrl)) return "";
- // Mobile Print Util's documented image-print web call.
- // Do NOT force the receipt to 384 CSS pixels here. The receipt artwork
- // stays at its native 800px canvas size and the printer utility handles
- // the thermal printer's paper width.
- return "com.samathosoft.webprint://#imageurl#" + encodeURI(dataUrl) + "#/imageurl#";
+async function makeMobilePrintUrlFromDataUrl(dataUrl){
+ const b64=base64FromDataUrl(dataUrl); if(!b64)return "";
+ // RPP02N is 384 dots wide. Explicitly provide BOTH dimensions so the iOS
+ // print bridge cannot re-fit the bitmap into a different aspect ratio.
+ const dims=await new Promise(resolve=>{
+  const im=new Image();
+  im.onload=()=>resolve({w:im.naturalWidth||384,h:im.naturalHeight||1});
+  im.onerror=()=>resolve({w:384,h:1});
+  im.src=dataUrl;
+ });
+ const printW=384;
+ const printH=Math.max(1,Math.round(dims.h*printW/dims.w));
+ const html='<!doctype html><html><head><meta charset="utf-8">'+
+   '<meta name="viewport" content="width=384, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">'+
+   '<style>'+   'html,body{margin:0!important;padding:0!important;width:384px!important;min-width:384px!important;max-width:384px!important;background:#fff!important;overflow:hidden!important}'+   '#page{width:384px!important;min-width:384px!important;max-width:384px!important;margin:0!important;padding:0!important;background:#fff!important}'+   'img{display:block!important;width:384px!important;height:'+printH+'px!important;min-width:384px!important;max-width:384px!important;min-height:'+printH+'px!important;max-height:'+printH+'px!important;margin:0!important;padding:0!important;border:0!important;object-fit:fill!important}'+   '</style></head><body><div id="page"><img src="data:image/png;base64,'+b64+'" width="384" height="'+printH+'" decoding="sync"></div></body></html>';
+ const bytes=new TextEncoder().encode(html); let binary=""; const chunk=0x8000;
+ for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));
+ return "com.samathosoft.webprint://#deb64#"+btoa(binary);
 }
 async function preparePrintPayload(blob){
  if(!blob)return false;
  try{
   const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob)});
-  preparedPrintLink=makeMobilePrintUrlFromDataUrl(dataUrl); preparedPrintBlob=blob; return !!preparedPrintLink;
+  preparedPrintLink=await makeMobilePrintUrlFromDataUrl(dataUrl); preparedPrintBlob=blob; return !!preparedPrintLink;
  }catch(e){console.error(e);preparedPrintLink="";preparedPrintBlob=blob;return false;}
 }
 async function prepareSquarePrintPayload(blob){
  if(!blob)return false;
  try{
   const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob)});
-  squarePrintLink=makeMobilePrintUrlFromDataUrl(dataUrl); squarePrintBlob=blob; return !!squarePrintLink;
+  squarePrintLink=await makeMobilePrintUrlFromDataUrl(dataUrl); squarePrintBlob=blob; return !!squarePrintLink;
  }catch(e){console.error(e);squarePrintLink="";squarePrintBlob=blob;return false;}
 }
 function launchMobilePrint(link){
@@ -1044,7 +1047,6 @@ function sendToNadayojiPrint(blob,label){
  if(blob!==prepared || !link){setStatus("[ PRINT DATA NOT READY — WAIT FOR READY MESSAGE ]");return false;}
  showPrinting(true); setStatus("[ PRINTING ♡ ]");
  const ok=launchMobilePrint(link); if(!ok){showPrinting(false);return false;}
- printLaunchedAt=Date.now();
  setTimeout(()=>showPrinting(false),7000); return true;
 }
 function autoSaveReceipt(blob,name){
@@ -1058,33 +1060,6 @@ function autoSaveReceipt(blob,name){
 function downloadReceipt(blob,name){
  if(!blob)return; try{const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)}catch(e){console.log("Download unavailable",e)}
 }
-let printLaunchedAt=0;
-let boothResumeTimer=null;
-function prepareBoothForNextCustomer(){
-  printBusy=false;
-  showPrinting(false);
-  if(boothResumeTimer){clearTimeout(boothResumeTimer);boothResumeTimer=null;}
-  // Reset only after returning from the printer app, never while the print is being launched.
-  if(document.visibilityState === "visible" && printLaunchedAt){
-    setTimeout(()=>{
-      if(document.visibilityState !== "visible") return;
-      receiptBlob=null; preparedPrintLink=""; preparedPrintBlob=null;
-      captured.style.display="none"; video.style.display="block";
-      receiptPhoto.removeAttribute("src");
-      retake.disabled=true; save.disabled=true; printReceipt.disabled=true;
-      if(stream) snap.disabled=false;
-      setStatus("[ READY FOR NEXT PHOTO ♡ ]");
-      printLaunchedAt=0;
-    },250);
-  }
-}
-document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState === "visible" && printLaunchedAt){ prepareBoothForNextCustomer(); }
-});
-window.addEventListener("pageshow",()=>{
-  if(printLaunchedAt) prepareBoothForNextCustomer();
-});
-
 function printReceiptImage(){
  if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;} if(printBusy)return; if(!preparedPrintLink){setStatus("[ PRINT STILL PREPARING — WAIT A MOMENT ]");return;}
  printBusy=true; autoSaveReceipt(receiptBlob,"nadayoji-photo-receipt.png"); downloadReceipt(receiptBlob,`nadayoji-photo-receipt-${Date.now()}.png`); setStatus("[ RECEIPT SAVED ♡ PRINTING... ]"); sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");
