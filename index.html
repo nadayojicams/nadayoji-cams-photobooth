@@ -1046,9 +1046,21 @@ function mobilePrintUtilLaunch(dataUrl,target){
  // Mobile Print Util documents #deb64# as base64-UTF-8 HTML input.
  // Build the complete custom URL synchronously inside the button tap so
  // iPadOS/Safari keeps the external-app launch permission.
- const printHtml='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>html,body{margin:0!important;padding:0!important;width:100%!important;}img{display:block!important;width:100%!important;height:auto!important;margin:0!important;padding:0!important;border:0!important;}</style></head>'+
-   '<body style="margin:0;padding:0;width:100%;background:#fff;">'+
-   '<img src="'+dataUrl+'" style="display:block;width:100%;height:auto;margin:0;padding:0;border:0;">'+
+ // Mobile Print Util has a dedicated image-print tag. Use it instead of
+ // wrapping the PNG in responsive HTML; that avoids the HTML renderer
+ // shrinking a 384-dot bitmap before it reaches the thermal printer.
+ const imageUrlTag =
+   "com.samathosoft.webprint://#imageurl#" +
+   encodeURI(dataUrl) +
+   "#/imageurl#";
+
+ // Keep a base64-HTML fallback available for installations that reject
+ // data:image URLs in the imageurl tag.
+ const printHtml='<!doctype html><html><head><meta charset="utf-8"><style>'+
+   'html,body{margin:0!important;padding:0!important;width:384px!important;background:#fff!important;}'+
+   'img{display:block!important;width:384px!important;max-width:none!important;height:auto!important;margin:0!important;padding:0!important;border:0!important;}'+
+   '</style></head><body>'+
+   '<img src="'+dataUrl+'" width="384" style="display:block;width:384px;max-width:none;height:auto;margin:0;padding:0;border:0;">'+
    '</body></html>';
 
  const bytes=new TextEncoder().encode(printHtml);
@@ -1058,7 +1070,7 @@ function mobilePrintUtilLaunch(dataUrl,target){
    binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
  }
  const b64=btoa(binary);
- const url="com.samathosoft.webprint://#deb64#"+b64;
+ const url=imageUrlTag;
 
  // Use a real anchor click rather than an async callback. This matches the
  // documented web-call pattern published by Mobile Print Util.
@@ -1081,9 +1093,8 @@ function mobilePrintUtilLaunch(dataUrl,target){
 }
 
 function directPrint(target,blob){
- if(target==="receipt") return mobilePrintUtilLaunch(receiptDataURL,target);
- // Square printing passes a data URL prepared by printSquarePhotos.
- return mobilePrintUtilLaunch(blob,target);
+ const dataUrl = target==="receipt" ? receiptDataURL : blob;
+ return mobilePrintUtilLaunch(dataUrl,target);
 }
 
 function printReceiptImage(){
