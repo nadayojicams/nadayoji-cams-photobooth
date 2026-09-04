@@ -927,7 +927,7 @@ function buildReceipt(photoBlob){
     txt("— NADAYOJI CAMS —",y,40,800); y+=65;
 
     // Crop the canvas exactly at the end of the content.
-    const finalH=Math.ceil(y*0.96);
+    const finalH=Math.ceil(y)+180;
     // One final receipt PNG is used for BOTH the on-screen preview and printing.
     // Keep the original receipt artwork size. No printer dot-width is forced here.
     // Mobile Print Util handles the final paper-width fitting.
@@ -1044,6 +1044,7 @@ function sendToNadayojiPrint(blob,label){
  if(blob!==prepared || !link){setStatus("[ PRINT DATA NOT READY — WAIT FOR READY MESSAGE ]");return false;}
  showPrinting(true); setStatus("[ PRINTING ♡ ]");
  const ok=launchMobilePrint(link); if(!ok){showPrinting(false);return false;}
+ printLaunchedAt=Date.now();
  setTimeout(()=>showPrinting(false),7000); return true;
 }
 function autoSaveReceipt(blob,name){
@@ -1057,6 +1058,33 @@ function autoSaveReceipt(blob,name){
 function downloadReceipt(blob,name){
  if(!blob)return; try{const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)}catch(e){console.log("Download unavailable",e)}
 }
+let printLaunchedAt=0;
+let boothResumeTimer=null;
+function prepareBoothForNextCustomer(){
+  printBusy=false;
+  showPrinting(false);
+  if(boothResumeTimer){clearTimeout(boothResumeTimer);boothResumeTimer=null;}
+  // Reset only after returning from the printer app, never while the print is being launched.
+  if(document.visibilityState === "visible" && printLaunchedAt){
+    setTimeout(()=>{
+      if(document.visibilityState !== "visible") return;
+      receiptBlob=null; preparedPrintLink=""; preparedPrintBlob=null;
+      captured.style.display="none"; video.style.display="block";
+      receiptPhoto.removeAttribute("src");
+      retake.disabled=true; save.disabled=true; printReceipt.disabled=true;
+      if(stream) snap.disabled=false;
+      setStatus("[ READY FOR NEXT PHOTO ♡ ]");
+      printLaunchedAt=0;
+    },250);
+  }
+}
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState === "visible" && printLaunchedAt){ prepareBoothForNextCustomer(); }
+});
+window.addEventListener("pageshow",()=>{
+  if(printLaunchedAt) prepareBoothForNextCustomer();
+});
+
 function printReceiptImage(){
  if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;} if(printBusy)return; if(!preparedPrintLink){setStatus("[ PRINT STILL PREPARING — WAIT A MOMENT ]");return;}
  printBusy=true; autoSaveReceipt(receiptBlob,"nadayoji-photo-receipt.png"); downloadReceipt(receiptBlob,`nadayoji-photo-receipt-${Date.now()}.png`); setStatus("[ RECEIPT SAVED ♡ PRINTING... ]"); sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");
