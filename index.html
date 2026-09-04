@@ -997,11 +997,24 @@ async function printReceiptImage(){
  // PRINT also saves the camera photo automatically so the original capture
  // is not lost when the Shortcut opens.
  if(lastPhotoBlob){
-   const u=URL.createObjectURL(lastPhotoBlob),a=document.createElement("a");
-   a.href=u;
-   a.download=`nadayoji-photo-${Date.now()}.jpg`;
-   document.body.appendChild(a);a.click();a.remove();
-   setTimeout(()=>URL.revokeObjectURL(u),2000);
+   // iPad Safari cannot silently write an image into Photos. Use the
+   // native share/save sheet when available; this is the reliable way
+   // for the user to save the captured photo to Photos/Files.
+   try{
+     const file=new File([lastPhotoBlob],`nadayoji-photo-${Date.now()}.jpg`,{type:"image/jpeg"});
+     if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+       await navigator.share({files:[file],title:"NADAYOJI CAMS photo"});
+     }else{
+       const u=URL.createObjectURL(lastPhotoBlob),a=document.createElement("a");
+       a.href=u;a.download=`nadayoji-photo-${Date.now()}.jpg`;
+       document.body.appendChild(a);a.click();a.remove();
+       setTimeout(()=>URL.revokeObjectURL(u),2000);
+     }
+   }catch(e){
+     // If the share sheet is cancelled, continue to printing instead of
+     // stopping the print workflow.
+     console.log("Photo save/share cancelled",e);
+   }
  }
  await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");
 }
