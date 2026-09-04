@@ -113,15 +113,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 }
 /* Direct one-click system printing — no Shortcut required */
 @page{size:58mm auto;margin:0;}
-@media print{
- html,body{margin:0 !important;padding:0 !important;width:58mm !important;min-width:58mm !important;background:#fff !important;}
- body *{visibility:hidden !important;}
- body.printing-receipt #receiptPaper,body.printing-receipt #receiptPaper *{visibility:visible !important;}
- body.printing-square #threePhotoCombined,body.printing-square #threePhotoCombined *{visibility:visible !important;}
- body.printing-receipt #receiptPaper{position:absolute !important;left:5mm !important;top:0 !important;width:48mm !important;max-width:48mm !important;min-width:48mm !important;margin:0 !important;padding:0 !important;overflow:visible !important;background:#fff !important;}
- body.printing-receipt #receiptPaper img,body.printing-receipt #receiptPaper canvas{width:48mm !important;max-width:48mm !important;height:auto !important;}
- body.printing-square #threePhotoCombined{position:absolute !important;left:5mm !important;top:0 !important;width:48mm !important;max-width:48mm !important;height:auto !important;margin:0 !important;}
-}
+
 
 @media print{
   #receiptPaper{
@@ -619,6 +611,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 @keyframes printerBlink{50%{opacity:.25}}
 
 </style>
+<meta name="mobile-print-util" content="com.samathosoft.webprint://#deb64#">
 </head>
 <body>
 
@@ -739,7 +732,7 @@ const $=id=>document.getElementById(id);
 const video=$("video"),captured=$("captured"),count=$("count"),status=$("status");
 const start=$("start"),snap=$("snap"),retake=$("retake"),save=$("save"),printReceipt=$("printReceipt");
 const receiptPhoto=$("receiptPhoto"),photoCanvas=$("photoCanvas"),printCanvas=$("printCanvas");
-let stream=null,receiptBlob=null,lastPhotoBlob=null;
+let stream=null,receiptBlob=null,lastPhotoBlob=null,receiptDataURL=null;
 
 const setStatus=t=>status.textContent=t;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -965,6 +958,14 @@ function buildReceipt(photoBlob){
 
     finalCanvas.toBlob(async blob=>{
       receiptBlob=blob;
+      receiptDataURL=null;
+      // Prepare the receipt data URL BEFORE the user taps PRINT. This is
+      // important on iPadOS because launching another app must happen during
+      // the original tap gesture; waiting for FileReader after the tap can be
+      // blocked by Safari.
+      const printReader=new FileReader();
+      printReader.onload=()=>{ receiptDataURL=printReader.result; };
+      printReader.readAsDataURL(blob);
       // Keep the exact same PNG for preview and printing. Also prepare the
       // clipboard as soon as the receipt is ready so the PRINT button only
       // has to launch the already-working NADAYOJI PRINT Shortcut.
@@ -1010,6 +1011,7 @@ function retakePhoto(){
   video.style.display="block";
   receiptPhoto.removeAttribute("src");
   receiptBlob=null;
+  receiptDataURL=null;
   lastPhotoBlob=null;
   snap.disabled=!stream;
   retake.disabled=true;
@@ -1031,27 +1033,65 @@ function downloadReceiptBlob(blob, filename){
  setTimeout(()=>URL.revokeObjectURL(u),5000);
  return true;
 }
-function directPrint(target){
- document.body.classList.remove("printing-receipt","printing-square");
- document.body.classList.add(target==="square"?"printing-square":"printing-receipt");
+function mobilePrintUtilLaunch(dataUrl,target){
+ if(!dataUrl){setStatus("[ PREPARING PRINT — TAP AGAIN ]");return false;}
+
  const overlay=$("printingOverlay");
- if(overlay){ overlay.classList.add("active"); overlay.setAttribute("aria-hidden","false"); }
+ if(overlay){
+   overlay.classList.add("active");
+   overlay.setAttribute("aria-hidden","false");
+ }
  setStatus("[ PRINTING ♡ ]");
- // Give the animation one frame to appear before opening the system print dialog.
- requestAnimationFrame(()=>setTimeout(()=>window.print(),120));
- // Keep the physical-printing animation visible for the normal thermal-print cycle.
+
+ // Mobile Print Util documents #deb64# as base64-UTF-8 HTML input.
+ // Build the complete custom URL synchronously inside the button tap so
+ // iPadOS/Safari keeps the external-app launch permission.
+ const printHtml='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=384"></head>'+
+   '<body style="margin:0;padding:0;width:384px;background:#fff;">'+
+   '<img src="'+dataUrl+'" style="display:block;width:384px;height:auto;margin:0;padding:0;border:0;">'+
+   '</body></html>';
+
+ const bytes=new TextEncoder().encode(printHtml);
+ let binary="";
+ const chunk=0x8000;
+ for(let i=0;i<bytes.length;i+=chunk){
+   binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+ }
+ const b64=btoa(binary);
+ const url="com.samathosoft.webprint://#deb64#"+b64;
+
+ // Use a real anchor click rather than an async callback. This matches the
+ // documented web-call pattern published by Mobile Print Util.
+ const a=document.createElement("a");
+ a.href=url;
+ a.style.display="none";
+ a.setAttribute("aria-hidden","true");
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+
  setTimeout(()=>{
-   if(overlay){ overlay.classList.remove("active"); overlay.setAttribute("aria-hidden","true"); }
-   document.body.classList.remove("printing-receipt","printing-square");
-   setStatus("[ PRINT COMPLETE ♡ ]");
- },10000);
+   if(overlay){
+     overlay.classList.remove("active");
+     overlay.setAttribute("aria-hidden","true");
+   }
+   setStatus("[ PRINT SENT ♡ ]");
+ },7000);
  return true;
 }
-async function printReceiptImage(){
+
+function directPrint(target,blob){
+ if(target==="receipt") return mobilePrintUtilLaunch(receiptDataURL,target);
+ // Square printing passes a data URL prepared by printSquarePhotos.
+ return mobilePrintUtilLaunch(blob,target);
+}
+
+function printReceiptImage(){
  if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;}
+ if(!receiptDataURL){setStatus("[ PREPARING PRINT — TAP AGAIN ]");return;}
  downloadReceiptBlob(receiptBlob,`nadayoji-photo-receipt-${Date.now()}.png`);
  setStatus("[ RECEIPT SAVED ♡ PRINTING... ]");
- directPrint("receipt");
+ directPrint("receipt",receiptBlob);
 }
 async function saveReceipt(){
  if(!receiptBlob)return;
@@ -1061,7 +1101,7 @@ async function saveReceipt(){
  setStatus("[ RECEIPT SAVED ♡ ]");
  setTimeout(()=>URL.revokeObjectURL(u),1500);
 }
-async function shareReceipt(){if(receiptBlob){downloadReceiptBlob(receiptBlob,`nadayoji-photo-receipt-${Date.now()}.png`);directPrint("receipt");}}
+function shareReceipt(){if(receiptBlob && receiptDataURL){downloadReceiptBlob(receiptBlob,`nadayoji-photo-receipt-${Date.now()}.png`);directPrint("receipt",receiptBlob);}}
 
 $("cameraFallback").addEventListener("change",e=>{
  const file=e.target.files&&e.target.files[0]; if(!file)return;
@@ -1215,7 +1255,9 @@ async function printSquarePhotos(){
  if(!combined)return;
  downloadReceiptBlob(combined,`nadayoji-3-square-photos-${Date.now()}.png`);
  setStatus("[ 3 PHOTOS SAVED ♡ PRINTING... ]");
- directPrint("square");
+ const r=new FileReader();
+ r.onload=()=>mobilePrintUtilLaunch(r.result,"square");
+ r.readAsDataURL(combined);
 }
 
 async function saveSquarePhotos(){
