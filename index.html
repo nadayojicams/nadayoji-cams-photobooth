@@ -28,6 +28,8 @@ radial-gradient(circle at 50% 38%,rgba(255,60,180,.17),transparent 35%),
 .panel{border:1px solid #542044;background:rgba(8,6,8,.75);padding:14px;box-shadow:0 0 25px rgba(255,60,180,.08)}
  .camera{background:#000;border:2px solid var(--pink);position:relative;overflow:hidden;width:75vw;max-width:75%;height:auto;margin-left:auto;margin-right:auto}
 video,.captured{width:100%;height:auto;aspect-ratio:var(--camera-ratio,4/3);object-fit:contain;display:block;background:#000}
+/* Fix live front-camera preview: normal selfie orientation. Do not mirror captured/printed photos. */
+#video{transform:scaleX(-1);transform-origin:center;}
 .captured{display:none;object-fit:contain;background:#000}
 .scan{position:absolute;inset:12px;border:1px solid rgba(255,130,210,.4);pointer-events:none}
 .scan:before,.scan:after{content:"";position:absolute;width:28px;height:28px;border-color:#ff6fc2}
