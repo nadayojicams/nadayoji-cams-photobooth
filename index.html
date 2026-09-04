@@ -650,7 +650,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
       <canvas id="threePhotoCanvas" class="hidden"></canvas>
       <img id="threePhotoCombined" class="three-photo-combined" alt="Three square photos with white border" style="display:none">
       <div class="receipt-actions square-actions">
-        <button id="squarePrint" class="primary" disabled>[ PRINT TO RPP02N ]</button>
+        <button id="squarePrint" class="primary" disabled>[ PRINT WITH QUICKPRINT ]</button>
         <button id="squareSave" disabled>[ ⇩ SAVE 3 PHOTOS ]</button>
       </div>
     </section>
@@ -682,10 +682,10 @@ button:disabled{opacity:.35;cursor:not-allowed}
       </div>
 
       <div class="receipt-actions">
-        <button id="printReceipt" class="primary" disabled>[ PRINT TO RPP02N ]</button>
+        <button id="printReceipt" class="primary" disabled>[ PRINT WITH QUICKPRINT ]</button>
         <button id="save" disabled>[ ⇩ SAVE RECEIPT ]</button>
       </div>
-      <div class="hint">PRINT sends the finished image to the NADAYOJI PRINT shortcut.</div>
+      <div class="hint">PRINT saves the receipt and opens QuickPrint through the iPad share menu.</div>
     </section>
   </div>
   <div class="footer">♡ NADAYOJI CAMS ♡</div>
@@ -699,7 +699,6 @@ const $=id=>document.getElementById(id);
 const video=$("video"),captured=$("captured"),count=$("count"),status=$("status");
 const start=$("start"),snap=$("snap"),retake=$("retake"),save=$("save"),printReceipt=$("printReceipt");
 const receiptPhoto=$("receiptPhoto"),photoCanvas=$("photoCanvas"),printCanvas=$("printCanvas");
-const NADAYOJI_PRINT_SHORTCUT="NADAYOJI PRINT";
 let stream=null,receiptBlob=null,lastPhotoBlob=null;
 
 const setStatus=t=>status.textContent=t;
@@ -736,7 +735,7 @@ async function startCamera(){
   video.onloadedmetadata=syncCameraRatio;
   video.onresize=syncCameraRatio;
   video.style.display="block";captured.style.display="none";
-  snap.disabled=false;retake.disabled=true;save.disabled=true;printReceipt.disabled=true;/* share button removed */
+  snap.disabled=false;retake.disabled=true;save.disabled=true;printReceipt.disabled=true;
   start.textContent="[ CAMERA READY ]";setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
  }catch(e){
   console.error("Camera error:",e);
@@ -808,7 +807,7 @@ async function takePhoto(){
 
 function buildReceipt(photoBlob){
   // The receipt is rendered once. The preview and downloaded file are the SAME PNG.
-  const W=800, PAD=24, MAX_PHOTO_W=W-PAD*2;
+  const W=800, PAD=12, MAX_PHOTO_W=W-PAD*2;
   const canvas=printCanvas;
   const ctx=canvas.getContext("2d");
   ctx.imageSmoothingEnabled=true;
@@ -862,13 +861,13 @@ function buildReceipt(photoBlob){
 
     let y=logoY+logoSize+28;
     rule(); y+=22;
-    txt("✦ PHOTO RECEIPT ✦",y,40,900); y+=38;
+    txt("✦ PHOTO RECEIPT ✦",y,64,900); y+=38;
 
     // Photo: preserve the exact source ratio, no stretching and no gray bars.
     const pw=photo.width, ph=photo.height;
     const scale=MAX_PHOTO_W/pw;
     const drawW=MAX_PHOTO_W, drawH=ph*scale;
-    const maxPhotoH=590;
+    const maxPhotoH=1180;
     const finalScale=Math.min(1, maxPhotoH/drawH);
     const fw=pw*scale*finalScale, fh=ph*scale*finalScale;
     ctx.drawImage(photo,center-fw/2,y,fw,fh);
@@ -876,7 +875,7 @@ function buildReceipt(photoBlob){
 
     ctx.textAlign="left";
     ctx.fillStyle="#000";
-    ctx.font="900 34px Arial, Helvetica, sans-serif";
+    ctx.font="900 54px Arial, Helvetica, sans-serif";
     const details=[
       ["DATE",$("rDate").textContent],
       ["TIME",$("rTime").textContent],
@@ -890,43 +889,34 @@ function buildReceipt(photoBlob){
     }
     y+=10; rule(); y+=28;
 
-    txt("ABOUT NADAYOJI CAMS",y,34,900); y+=38;
+    txt("ABOUT NADAYOJI CAMS",y,54,900); y+=38;
     y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,23,W-70,30);
     y+=6;
     y=wrap("Y2K memories brought back to life through cameras.",y,23,W-70,30);
     y+=10;
-    txt("Capture moments.",y,28,900); y+=34;
-    txt("Keep the memory.",y,28,900); y+=40;
+    txt("Capture moments.",y,46,900); y+=34;
+    txt("Keep the memory.",y,46,900); y+=40;
 
     rule(); y+=28;
-    txt("THANK YOU FOR SUPPORTING",y,28,900); y+=34;
+    txt("THANK YOU FOR SUPPORTING",y,46,900); y+=34;
     txt("NADAYOJI CAMS!",y,35,900); y+=40;
-    txt("♥  KEEP THE MEMORY  ♡",y,27,900); y+=40;
+    txt("♥  KEEP THE MEMORY  ♡",y,44,900); y+=40;
 
     txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,23,900); y+=40;
     rule(); y+=28;
-    txt("MEMORIES FADE, PHOTOS DON'T.",y,27,900); y+=34;
-    txt("— NADAYOJI CAMS —",y,24,800); y+=40;
+    txt("MEMORIES FADE, PHOTOS DON'T.",y,44,900); y+=34;
+    txt("— NADAYOJI CAMS —",y,38,800); y+=40;
 
     // Crop exactly to the finished receipt while keeping the ORIGINAL 800px artwork width.
-    // No 384-dot conversion: Mobile Print Util / the printer handles the physical paper width.
+    // No 384-dot conversion: QuickPrint receives the full receipt PNG without a forced 384-dot resize.
     const finalH=y;
     canvas.height=finalH;
 
     canvas.toBlob(async blob=>{
       receiptBlob=blob;
-      // Keep the exact same PNG for preview and printing. Also prepare the
-      // clipboard as soon as the receipt is ready so the PRINT button only
-      // has to launch the already-working NADAYOJI PRINT Shortcut.
-      try{
-        if(navigator.clipboard && window.ClipboardItem && window.isSecureContext){
-          await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
-          setStatus("[ PHOTO READY ♡ TAP PRINT TO PRINT ]");
-        }
-      }catch(e){
-        console.log("Clipboard preparation unavailable",e);
-        setStatus("[ PHOTO READY ♡ TAP PRINT ]");
-      }
+      // The receipt stays as one PNG. PRINT will auto-save it locally and pass the
+      // same file to the iPad share menu, where QuickPrint can receive it.
+      setStatus("[ PHOTO READY ♡ TAP PRINT TO PRINT ]");
       const url=URL.createObjectURL(blob);
       const paper=$("receiptPaper");
       paper.innerHTML="";
@@ -937,7 +927,7 @@ function buildReceipt(photoBlob){
       paper.appendChild(preview);
       save.disabled=false;
       printReceipt.disabled=false;
-      /* share button removed */
+      
     },"image/png");
   }
 
@@ -964,7 +954,7 @@ function retakePhoto(){
   snap.disabled=!stream;
   retake.disabled=true;
   save.disabled=true;
-  /* share button removed */
+  
   if(boothMode==="square"){
     snap.textContent="[ ♡ SQUARE 1/3 ♡ ]";
     setStatus("[ 3 SQUARE PHOTOS MODE ♡ PHOTO 1/3 ]");
@@ -973,31 +963,49 @@ function retakePhoto(){
     setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
   }
 }
-function sendToNadayojiPrint(blob,label){
+async function autoSaveReceipt(blob,label){
+ if(!blob || !window.indexedDB)return;
+ try{
+   const db=await new Promise((resolve,reject)=>{
+     const req=indexedDB.open("nadayoji-receipts",1);
+     req.onupgradeneeded=()=>{ if(!req.result.objectStoreNames.contains("receipts")) req.result.createObjectStore("receipts",{keyPath:"id"}); };
+     req.onsuccess=()=>resolve(req.result);
+     req.onerror=()=>reject(req.error);
+   });
+   await new Promise((resolve,reject)=>{
+     const tx=db.transaction("receipts","readwrite");
+     tx.objectStore("receipts").put({id:Date.now(),name:label||"nadayoji-photo-receipt.png",blob,created:new Date().toISOString()});
+     tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error);
+   });
+   db.close();
+ }catch(e){ console.log("Local auto-save unavailable",e); }
+}
+
+async function sendToQuickPrint(blob,label){
  if(!blob){setStatus("[ NOTHING TO PRINT YET ]");return false;}
- const url="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
- setStatus("[ PRINTING ♡ ]");
- window.location.href=url;
- return true;
+ const filename=label||"nadayoji-photo-receipt.png";
+ await autoSaveReceipt(blob,filename);
+ try{
+   const file=new File([blob],filename,{type:blob.type||"image/png",lastModified:Date.now()});
+   if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+     setStatus("[ OPENING QUICKPRINT ♡ ]");
+     await navigator.share({files:[file],title:"NADAYOJI CAMS Receipt",text:"Print this receipt with QuickPrint."});
+     setStatus("[ SENT TO QUICKPRINT ♡ ]");
+     return true;
+   }
+   throw new Error("File sharing is not supported on this iPad/browser.");
+ }catch(e){
+   if(e && e.name==="AbortError"){ setStatus("[ PRINT CANCELLED ]"); return false; }
+   console.log("QuickPrint share failed",e);
+   setStatus("[ TAP SHARE AND CHOOSE QUICKPRINT ]");
+   return false;
+ }
 }
 
 async function printReceiptImage(){
  if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;}
- // One-tap workflow: save the COMPLETE receipt artwork (photo + receipt layout)
- // as one PNG, then launch the already-working printer Shortcut. No Save/Share
- // sheet is shown.
- try{
-   const u=URL.createObjectURL(receiptBlob),a=document.createElement("a");
-   a.href=u;
-   a.download=`nadayoji-photo-receipt-${Date.now()}.png`;
-   a.style.display="none";
-   document.body.appendChild(a);
-   a.click();
-   a.remove();
-   setTimeout(()=>URL.revokeObjectURL(u),5000);
-   setStatus("[ RECEIPT SAVED ♡ PRINTING... ]");
- }catch(e){console.log("Automatic receipt save failed",e);}
- await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");
+ setStatus("[ SAVING RECEIPT ♡ ]");
+ await sendToQuickPrint(receiptBlob,"nadayoji-photo-receipt.png");
 }
 async function saveReceipt(){
  if(!receiptBlob)return;
@@ -1007,7 +1015,7 @@ async function saveReceipt(){
  setStatus("[ RECEIPT SAVED ♡ ]");
  setTimeout(()=>URL.revokeObjectURL(u),1500);
 }
-async function shareReceipt(){if(receiptBlob)await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");}
+async function shareReceipt(){if(receiptBlob)await sendToQuickPrint(receiptBlob,"nadayoji-photo-receipt.png");}
 
 $("cameraFallback").addEventListener("change",e=>{
  const file=e.target.files&&e.target.files[0]; if(!file)return;
@@ -1159,7 +1167,7 @@ async function makeFunPrintThreePhoto(){
 async function printSquarePhotos(){
  const combined=await makeCombinedThreePhoto();
  if(!combined)return;
- await sendToNadayojiPrint(combined,"nadayoji-3-square-photos.png");
+ await sendToQuickPrint(combined,"nadayoji-3-square-photos.png");
 }
 
 async function saveSquarePhotos(){
