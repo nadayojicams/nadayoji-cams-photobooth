@@ -700,7 +700,7 @@ const video=$("video"),captured=$("captured"),count=$("count"),status=$("status"
 const start=$("start"),snap=$("snap"),retake=$("retake"),save=$("save"),printReceipt=$("printReceipt");
 const receiptPhoto=$("receiptPhoto"),photoCanvas=$("photoCanvas"),printCanvas=$("printCanvas");
 const NADAYOJI_PRINT_SHORTCUT="NADAYOJI PRINT";
-let stream=null,receiptBlob=null;
+let stream=null,receiptBlob=null,lastPhotoBlob=null;
 
 const setStatus=t=>status.textContent=t;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -784,6 +784,7 @@ async function takePhoto(){
  c.restore();
 
  photoCanvas.toBlob(blob=>{
+  lastPhotoBlob=blob;
   const u=URL.createObjectURL(blob);
   captured.src=u;receiptPhoto.src=u;
   video.style.display="none";captured.style.display="block";
@@ -920,8 +921,8 @@ function buildReceipt(photoBlob){
     finalCtx.imageSmoothingQuality="high";
     finalCtx.fillStyle="#fff";
     finalCtx.fillRect(0,0,PRINT_W,PRINT_H);
-    const PRINT_SHIFT_X=-24;
-    finalCtx.drawImage(canvas,0,0,W,finalH,PRINT_SHIFT_X,0,PRINT_W,PRINT_H);
+    // No horizontal compensation: the print PNG must be identical to the receipt preview.
+    finalCtx.drawImage(canvas,0,0,W,finalH,0,0,PRINT_W,PRINT_H);
 
     finalCanvas.toBlob(async blob=>{
       receiptBlob=blob;
@@ -970,6 +971,7 @@ function retakePhoto(){
   video.style.display="block";
   receiptPhoto.removeAttribute("src");
   receiptBlob=null;
+  lastPhotoBlob=null;
   snap.disabled=!stream;
   retake.disabled=true;
   save.disabled=true;
@@ -990,7 +992,19 @@ function sendToNadayojiPrint(blob,label){
  return true;
 }
 
-async function printReceiptImage(){if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;} await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");}
+async function printReceiptImage(){
+ if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;}
+ // PRINT also saves the camera photo automatically so the original capture
+ // is not lost when the Shortcut opens.
+ if(lastPhotoBlob){
+   const u=URL.createObjectURL(lastPhotoBlob),a=document.createElement("a");
+   a.href=u;
+   a.download=`nadayoji-photo-${Date.now()}.jpg`;
+   document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(u),2000);
+ }
+ await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");
+}
 async function saveReceipt(){
  if(!receiptBlob)return;
  const u=URL.createObjectURL(receiptBlob),a=document.createElement("a");
@@ -1003,6 +1017,7 @@ async function shareReceipt(){if(receiptBlob)await sendToNadayojiPrint(receiptBl
 
 $("cameraFallback").addEventListener("change",e=>{
  const file=e.target.files&&e.target.files[0]; if(!file)return;
+ lastPhotoBlob=file;
  const u=URL.createObjectURL(file);
  captured.src=u;receiptPhoto.src=u;video.style.display="none";captured.style.display="block";
  const now=new Date(),d=now.toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}).replaceAll("/","."),t=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
