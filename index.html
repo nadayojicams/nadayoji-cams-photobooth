@@ -587,16 +587,9 @@ button:disabled{opacity:.35;cursor:not-allowed}
   #receiptPaper{width:305px !important;max-width:305px !important;}
 }
 
-/* Final print-button interaction fix */
-.print-btn, #printBtn, #squarePrintBtn, button[data-print],
-button[onclick*="print"], button[id*="Print"], button[id*="print"] {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-  position: relative !important;
-  z-index: 50 !important;
-  touch-action: manipulation !important;
-}
-
+/* Final print interaction */
+#printReceipt, #squarePrint { pointer-events:auto !important; touch-action:manipulation !important; position:relative !important; z-index:20 !important; }
+#printReceipt:not(:disabled), #squarePrint:not(:disabled) { opacity:1 !important; cursor:pointer !important; }
 </style>
 </head>
 <body>
@@ -743,7 +736,7 @@ async function startCamera(){
   video.onloadedmetadata=syncCameraRatio;
   video.onresize=syncCameraRatio;
   video.style.display="block";captured.style.display="none";
-  snap.disabled=false;retake.disabled=true;save.disabled=true;share.disabled=true;
+  snap.disabled=false;retake.disabled=true;save.disabled=true;printReceipt.disabled=true;share.disabled=true;
   start.textContent="[ CAMERA READY ]";setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
  }catch(e){
   console.error("Camera error:",e);
@@ -916,9 +909,18 @@ function buildReceipt(photoBlob){
 
     // Crop the canvas exactly at the end of the content.
     const finalH=y;
+    // One final receipt PNG is used for BOTH the on-screen preview and printing.
+    // 384 dots is the RPP02N's valid print width.
+    const PRINT_W=384;
+    const PRINT_H=Math.round(finalH*(PRINT_W/W));
     const finalCanvas=document.createElement("canvas");
-    finalCanvas.width=W; finalCanvas.height=finalH;
-    finalCanvas.getContext("2d").drawImage(canvas,0,0,W,finalH,0,0,W,finalH);
+    finalCanvas.width=PRINT_W; finalCanvas.height=PRINT_H;
+    const finalCtx=finalCanvas.getContext("2d");
+    finalCtx.imageSmoothingEnabled=true;
+    finalCtx.imageSmoothingQuality="high";
+    finalCtx.fillStyle="#fff";
+    finalCtx.fillRect(0,0,PRINT_W,PRINT_H);
+    finalCtx.drawImage(canvas,0,0,W,finalH,0,0,PRINT_W,PRINT_H);
 
     finalCanvas.toBlob(blob=>{
       receiptBlob=blob;
@@ -931,6 +933,7 @@ function buildReceipt(photoBlob){
       preview.style.cssText="display:block;width:100%;height:auto;max-width:100%;margin:0;background:#fff;object-fit:contain;";
       paper.appendChild(preview);
       save.disabled=false;
+      printReceipt.disabled=false;
       share.disabled=!navigator.share;
     },"image/png");
   }
@@ -988,7 +991,7 @@ async function sendToNadayojiPrint(blob,label){
  return false;
 }
 
-async function printReceiptImage(){if(receiptBlob)await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");}
+async function printReceiptImage(){if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;} await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");}
 async function saveReceipt(){
  if(!receiptBlob)return;
  const u=URL.createObjectURL(receiptBlob),a=document.createElement("a");
@@ -1189,19 +1192,5 @@ start.onclick=async()=>{
 snap.onclick=()=>boothMode==="square"?takeSquarePhoto():takePhoto();retake.onclick=retakePhoto;save.onclick=saveReceipt;printReceipt.onclick=printReceiptImage;updateModeUI();
 })();
 </script>
-
-<script>
-document.addEventListener('click', function(e) {
-  const b = e.target.closest('button');
-  if (!b) return;
-  const label = (b.textContent || '').trim().toUpperCase();
-  if (!label.includes('PRINT TO RPP02N')) return;
-  // Do not block the page's existing handler. If it has no usable handler,
-  // expose a native share/print fallback rather than leaving the button inert.
-  if (b.dataset.nadayojiPrintFallback === '1') return;
-  b.dataset.nadayojiPrintFallback = '1';
-}, true);
-</script>
-
 </body>
 </html>
