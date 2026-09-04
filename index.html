@@ -840,7 +840,7 @@ async function takePhoto(){
 
 function buildReceipt(photoBlob){
   // The receipt is rendered once. The preview and downloaded file are the SAME PNG.
-  const W=800, PAD=52, MAX_PHOTO_W=W-PAD*2;
+  const W=384, PAD=10, MAX_PHOTO_W=W-PAD*2;
   const canvas=printCanvas;
   const ctx=canvas.getContext("2d");
   ctx.imageSmoothingEnabled=true;
@@ -887,20 +887,20 @@ function buildReceipt(photoBlob){
 
     // NADAYOJI logo — preserve the complete 1:1 square artwork.
     // The source asset is 500x500; draw the entire asset into a square with no crop.
-    const logoSize=80;
+    const logoSize=38;
     const logoX=center-logoSize/2, logoY=25;
     // Keep the generated receipt logo compact and fully separated from the title.
     ctx.drawImage(logo,logoX,logoY,logoSize,logoSize);
 
     let y=logoY+logoSize+28;
     rule(); y+=22;
-    txt("✦ PHOTO RECEIPT ✦",y,32,900); y+=30;
+    txt("✦ PHOTO RECEIPT ✦",y,16,900); y+=30;
 
     // Photo: preserve the exact source ratio, no stretching and no gray bars.
     const pw=photo.width, ph=photo.height;
     const scale=MAX_PHOTO_W/pw;
     const drawW=MAX_PHOTO_W, drawH=ph*scale;
-    const maxPhotoH=430;
+    const maxPhotoH=620;
     const finalScale=Math.min(1, maxPhotoH/drawH);
     const fw=pw*scale*finalScale, fh=ph*scale*finalScale;
     ctx.drawImage(photo,center-fw/2,y,fw,fh);
@@ -908,7 +908,7 @@ function buildReceipt(photoBlob){
 
     ctx.textAlign="left";
     ctx.fillStyle="#000";
-    ctx.font="900 27px Arial, Helvetica, sans-serif";
+    ctx.font="900 15px Arial, Helvetica, sans-serif";
     const details=[
       ["DATE",$("rDate").textContent],
       ["TIME",$("rTime").textContent],
@@ -917,35 +917,35 @@ function buildReceipt(photoBlob){
     ];
     for(const [k,v] of details){
       ctx.fillText(k+" :",PAD,y);
-      ctx.fillText(v,245,y);
-      y+=36;
+      ctx.fillText(v,145,y);
+      y+=20;
     }
     y+=10; rule(); y+=28;
 
-    txt("ABOUT NADAYOJI CAMS",y,28,900); y+=30;
-    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,19,W-110,25);
+    txt("ABOUT NADAYOJI CAMS",y,14,900); y+=30;
+    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,10,W-24,13);
     y+=6;
-    y=wrap("Y2K memories brought back to life through cameras.",y,19,W-110,25);
+    y=wrap("Y2K memories brought back to life through cameras.",y,10,W-24,13);
     y+=10;
-    txt("Capture moments.",y,23,900); y+=28;
-    txt("Keep the memory.",y,23,900); y+=35;
+    txt("Capture moments.",y,12,900); y+=28;
+    txt("Keep the memory.",y,12,900); y+=35;
 
     rule(); y+=28;
-    txt("THANK YOU FOR SUPPORTING",y,23,900); y+=28;
-    txt("NADAYOJI CAMS!",y,29,900); y+=32;
-    txt("♥  KEEP THE MEMORY  ♡",y,22,900); y+=35;
+    txt("THANK YOU FOR SUPPORTING",y,12,900); y+=28;
+    txt("NADAYOJI CAMS!",y,15,900); y+=32;
+    txt("♥  KEEP THE MEMORY  ♡",y,11,900); y+=35;
 
-    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,19,900); y+=35;
+    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,9,900); y+=35;
     rule(); y+=28;
-    txt("MEMORIES FADE, PHOTOS DON'T.",y,22,900); y+=28;
-    txt("— NADAYOJI CAMS —",y,20,800); y+=35;
+    txt("MEMORIES FADE, PHOTOS DON'T.",y,11,900); y+=28;
+    txt("— NADAYOJI CAMS —",y,10,800); y+=35;
 
     // Crop the canvas exactly at the end of the content.
     const finalH=y;
     // One final receipt PNG is used for BOTH the on-screen preview and printing.
     // 384 dots is the RPP02N's valid print width.
     const PRINT_W=384;
-    const PRINT_H=Math.round(finalH*(PRINT_W/W));
+    const PRINT_H=finalH;
     const finalCanvas=document.createElement("canvas");
     finalCanvas.width=PRINT_W; finalCanvas.height=PRINT_H;
     const finalCtx=finalCanvas.getContext("2d");
@@ -1046,9 +1046,9 @@ function mobilePrintUtilLaunch(dataUrl,target){
  // Mobile Print Util documents #deb64# as base64-UTF-8 HTML input.
  // Build the complete custom URL synchronously inside the button tap so
  // iPadOS/Safari keeps the external-app launch permission.
- const printHtml='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=384"></head>'+
-   '<body style="margin:0;padding:0;width:384px;background:#fff;">'+
-   '<img src="'+dataUrl+'" style="display:block;width:384px;height:auto;margin:0;padding:0;border:0;">'+
+ const printHtml='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>html,body{margin:0!important;padding:0!important;width:100%!important;}img{display:block!important;width:100%!important;height:auto!important;margin:0!important;padding:0!important;border:0!important;}</style></head>'+
+   '<body style="margin:0;padding:0;width:100%;background:#fff;">'+
+   '<img src="'+dataUrl+'" style="display:block;width:100%;height:auto;margin:0;padding:0;border:0;">'+
    '</body></html>';
 
  const bytes=new TextEncoder().encode(printHtml);
