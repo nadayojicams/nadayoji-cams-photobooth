@@ -911,8 +911,9 @@ function buildReceipt(photoBlob){
     // Crop the canvas exactly at the end of the content.
     const finalH=y;
     // One final receipt PNG is used for BOTH the on-screen preview and printing.
-    // 384 dots is the RPP02N's valid print width.
-    const PRINT_W=384;
+    // Render at 2x so the Bluetooth print shortcut does not scale the receipt down to half-size.
+    // The RPP02N prints 384 dots wide; the shortcut scales this 768px artwork to the full printable width.
+    const PRINT_W=768;
     const PRINT_H=Math.round(finalH*(PRINT_W/W));
     const finalCanvas=document.createElement("canvas");
     finalCanvas.width=PRINT_W; finalCanvas.height=PRINT_H;
