@@ -920,15 +920,22 @@ function buildReceipt(photoBlob){
     finalCtx.imageSmoothingQuality="high";
     finalCtx.fillStyle="#fff";
     finalCtx.fillRect(0,0,PRINT_W,PRINT_H);
-    const PRINT_SHIFT_X=0;
+    const PRINT_SHIFT_X=-24;
     finalCtx.drawImage(canvas,0,0,W,finalH,PRINT_SHIFT_X,0,PRINT_W,PRINT_H);
 
-    finalCanvas.toBlob(blob=>{
+    finalCanvas.toBlob(async blob=>{
       receiptBlob=blob;
-      // Pre-load the exact receipt image into the iPad clipboard while the receipt is generated.
-      // This avoids Safari losing the button gesture when PRINT launches the Shortcut.
-      if(navigator.clipboard && window.ClipboardItem && window.isSecureContext){
-        navigator.clipboard.write([new ClipboardItem({"image/png":blob})]).catch(()=>{});
+      // Keep the exact same PNG for preview and printing. Also prepare the
+      // clipboard as soon as the receipt is ready so the PRINT button only
+      // has to launch the already-working NADAYOJI PRINT Shortcut.
+      try{
+        if(navigator.clipboard && window.ClipboardItem && window.isSecureContext){
+          await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
+          setStatus("[ PHOTO READY ♡ TAP PRINT TO PRINT ]");
+        }
+      }catch(e){
+        console.log("Clipboard preparation unavailable",e);
+        setStatus("[ PHOTO READY ♡ TAP PRINT ]");
       }
       const url=URL.createObjectURL(blob);
       const paper=$("receiptPaper");
@@ -977,21 +984,10 @@ function retakePhoto(){
 }
 function sendToNadayojiPrint(blob,label){
  if(!blob){setStatus("[ NOTHING TO PRINT YET ]");return false;}
- // The receipt is copied to the clipboard when generated. PRINT only needs to
- // launch the already-configured Shortcut, preserving the iPad user gesture.
- try{
-  const url="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
-  const a=document.createElement("a");
-  a.href=url; a.style.display="none";
-  document.body.appendChild(a); a.click();
-  setTimeout(()=>a.remove(),1000);
-  setStatus("[ PRINTING NADAYOJI CAMS RECEIPT ♡ ]");
-  return true;
- }catch(e){
-  console.log("Shortcut launch failed",e);
-  setStatus("[ PRINT COULD NOT START — TAP PRINT AGAIN ]");
-  return false;
- }
+ const url="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
+ setStatus("[ PRINTING ♡ ]");
+ window.location.href=url;
+ return true;
 }
 
 async function printReceiptImage(){if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;} await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");}
