@@ -262,6 +262,288 @@ button:disabled{opacity:.35;cursor:not-allowed}
   }
 }
 
+
+/* iPad receipt: proportional, centered, not cramped */
+@media (min-width:768px) and (max-width:1366px){
+  #receiptPaper{
+    width:min(72vw, 560px) !important;
+    max-width:560px !important;
+    min-width:420px !important;
+    margin:28px auto !important;
+    padding:30px 34px 360px !important;
+    box-sizing:border-box !important;
+    overflow:hidden !important;
+  }
+  #receiptPaper canvas,
+  #receiptCanvas,
+  #receiptPaper img{
+    width:100% !important;
+    max-width:100% !important;
+    height:auto !important;
+    display:block !important;
+    margin:0 auto !important;
+  }
+}
+@media (min-width:768px) and (max-width:900px){
+  #receiptPaper{
+    width:78vw !important;
+    min-width:0 !important;
+    max-width:560px !important;
+    padding-left:28px !important;
+    padding-right:28px !important;
+  }
+}
+@media (max-width:767px){
+  #receiptPaper{
+    width:calc(100vw - 32px) !important;
+    max-width:none !important;
+    min-width:0 !important;
+    margin:20px auto !important;
+    padding:24px 22px 360px !important;
+  }
+}
+
+
+/* FINAL iPad layout: live camera on the left, receipt directly beside it on the right */
+@media (min-width:768px) and (max-width:1366px){
+  .grid{
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) 430px !important;
+    align-items:start !important;
+    gap:24px !important;
+  }
+
+  .camera-section{
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  .receipt-section,
+  #receiptSection{
+    width:430px !important;
+    max-width:430px !important;
+    margin:0 !important;
+    justify-self:end !important;
+  }
+
+  #receiptPaper{
+    width:410px !important;
+    max-width:410px !important;
+    min-width:0 !important;
+    margin:20px 0 20px auto !important;
+    padding:24px 26px 300px !important;
+    box-sizing:border-box !important;
+    overflow:hidden !important;
+  }
+
+  #receiptPaper canvas,
+  #receiptCanvas,
+  #receiptPaper img{
+    width:100% !important;
+    max-width:100% !important;
+    height:auto !important;
+    display:block !important;
+    margin:0 auto !important;
+  }
+}
+
+@media (min-width:768px) and (max-width:900px){
+  .grid{
+    grid-template-columns:minmax(0, 1fr) 360px !important;
+    gap:14px !important;
+  }
+
+  .receipt-section,
+  #receiptSection{
+    width:360px !important;
+    max-width:360px !important;
+  }
+
+  #receiptPaper{
+    width:344px !important;
+    max-width:344px !important;
+    padding-left:20px !important;
+    padding-right:20px !important;
+  }
+}
+
+
+/* Fix receipt distortion: never stretch the receipt's generated aspect ratio */
+@media (min-width:768px) and (max-width:1366px){
+  #receiptPaper{
+    width:410px !important;
+    max-width:410px !important;
+    min-width:0 !important;
+    height:auto !important;
+    min-height:0 !important;
+    box-sizing:border-box !important;
+    overflow:visible !important;
+  }
+
+  #receiptPaper canvas,
+  #receiptCanvas,
+  #receiptPaper img{
+    width:auto !important;
+    max-width:100% !important;
+    height:auto !important;
+    aspect-ratio:auto !important;
+    object-fit:contain !important;
+    display:block !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+
+  /* Keep the receipt preview's internal proportions intact */
+  #receiptPaper > *{
+    flex-shrink:0 !important;
+  }
+}
+
+@media (min-width:768px) and (max-width:900px){
+  #receiptPaper{
+    width:330px !important;
+    max-width:330px !important;
+  }
+}
+
+
+/* FINAL iPad fix: reserve a real column for the receipt so the camera cannot overlap it */
+@media (min-width:768px) and (max-width:1366px){
+  .grid{
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) minmax(330px, 410px) !important;
+    gap:24px !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    overflow:visible !important;
+  }
+
+  .grid > *{
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+
+  .camera-section,
+  .camera-card,
+  .camera{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+
+  /* Never let a vw-sized camera escape its grid column */
+  .camera.square-camera,
+  video.square-camera,
+  #video{
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
+
+  .receipt-section,
+  #receiptSection{
+    width:100% !important;
+    max-width:410px !important;
+    min-width:0 !important;
+    margin:0 !important;
+    justify-self:end !important;
+    box-sizing:border-box !important;
+  }
+
+  #receiptPaper{
+    width:100% !important;
+    max-width:410px !important;
+    min-width:0 !important;
+    margin:20px 0 !important;
+    box-sizing:border-box !important;
+  }
+}
+
+@media (min-width:768px) and (max-width:900px){
+  .grid{
+    grid-template-columns:minmax(0, 1fr) 330px !important;
+    gap:16px !important;
+  }
+
+  .receipt-section,
+  #receiptSection,
+  #receiptPaper{
+    max-width:330px !important;
+  }
+}
+
+
+/* iPad: make the live camera clearly larger than the receipt */
+@media (min-width:768px) and (max-width:1366px){
+  .grid{
+    grid-template-columns:minmax(0, 1fr) 340px !important;
+    gap:28px !important;
+  }
+
+  .camera-section,
+  .camera-card,
+  .camera{
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  .camera.square-camera,
+  video.square-camera,
+  #video{
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  .receipt-section,
+  #receiptSection{
+    width:340px !important;
+    max-width:340px !important;
+  }
+
+  #receiptPaper{
+    width:320px !important;
+    max-width:320px !important;
+    margin-left:auto !important;
+    margin-right:0 !important;
+  }
+}
+
+@media (min-width:1100px) and (max-width:1366px){
+  .grid{
+    grid-template-columns:minmax(0, 1fr) 360px !important;
+  }
+  .receipt-section,
+  #receiptSection{ width:360px !important; max-width:360px !important; }
+  #receiptPaper{ width:340px !important; max-width:340px !important; }
+}
+
+
+/* Slightly enlarge camera while keeping a dedicated receipt column */
+@media (min-width:768px) and (max-width:1366px){
+  .grid{
+    grid-template-columns:minmax(0, 1fr) 315px !important;
+    gap:26px !important;
+  }
+  .receipt-section,
+  #receiptSection{
+    width:315px !important;
+    max-width:315px !important;
+  }
+  #receiptPaper{
+    width:295px !important;
+    max-width:295px !important;
+  }
+}
+@media (min-width:1100px) and (max-width:1366px){
+  .grid{
+    grid-template-columns:minmax(0, 1fr) 330px !important;
+  }
+  .receipt-section,
+  #receiptSection{ width:330px !important; max-width:330px !important; }
+  #receiptPaper{ width:310px !important; max-width:310px !important; }
+}
+
 </style>
 </head>
 <body>
@@ -322,10 +604,8 @@ button:disabled{opacity:.35;cursor:not-allowed}
       <canvas id="threePhotoCanvas" class="hidden"></canvas>
       <img id="threePhotoCombined" class="three-photo-combined" alt="Three square photos with white border" style="display:none">
       <div class="receipt-actions square-actions">
-        <button id="squareFunPrint" disabled>[ ⇩ SAVE PHOTO ]</button>
-        <button id="squareOpenFunPrint" disabled>[ OPEN IN FUN PRINT ]</button>
+        <button id="squarePrint" class="primary" disabled>[ PRINT TO RPP02N ]</button>
         <button id="squareSave" disabled>[ ⇩ SAVE 3 PHOTOS ]</button>
-        <button id="squarePrint" disabled>[ PRINT TO RPP02N ]</button>
       </div>
     </section>
 
@@ -356,12 +636,10 @@ button:disabled{opacity:.35;cursor:not-allowed}
       </div>
 
       <div class="receipt-actions">
+        <button id="printReceipt" class="primary" disabled>[ PRINT TO RPP02N ]</button>
         <button id="save" disabled>[ ⇩ SAVE RECEIPT ]</button>
-        <button id="printerConnect">[ CONNECT RPP02N ]</button>
-        <button id="receiptPrint" disabled>[ PRINT TO RPP02N ]</button>
-        <button id="share" disabled>[ SHARE ]</button>
       </div>
-      <div class="hint">TAP SAVE PHOTO → CHOOSE FUN PRINT → PRINT TO BQ05</div>
+      <div class="hint">PRINT sends the finished image to the NADAYOJI PRINT shortcut.</div>
     </section>
   </div>
   <div class="footer">♡ NADAYOJI CAMS ♡</div>
@@ -373,74 +651,10 @@ button:disabled{opacity:.35;cursor:not-allowed}
 (()=>{
 const $=id=>document.getElementById(id);
 const video=$("video"),captured=$("captured"),count=$("count"),status=$("status");
-const start=$("start"),snap=$("snap"),retake=$("retake"),save=$("save"),share=$("share");
+const start=$("start"),snap=$("snap"),retake=$("retake"),save=$("save"),printReceipt=$("printReceipt");
 const receiptPhoto=$("receiptPhoto"),photoCanvas=$("photoCanvas"),printCanvas=$("printCanvas");
+const NADAYOJI_PRINT_SHORTCUT="NADAYOJI PRINT";
 let stream=null,receiptBlob=null;
-let printerDevice=null, printerCharacteristic=null;
-
-async function connectRPP02N(){
-  if(!navigator.bluetooth){
-    setStatus("[ WEB BLUETOOTH NOT AVAILABLE — ENABLE BEACIO ]");
-    return false;
-  }
-  try{
-    setStatus("[ SELECT RPP02N ]");
-    printerDevice=await navigator.bluetooth.requestDevice({
-      filters:[{name:"RPP02N"}],
-      optionalServices:[
-        "49535343-fe7d-4ae5-8fa9-9fafd205e455",
-        "0000ff00-0000-1000-8000-00805f9b34fb",
-        "000018f0-0000-1000-8000-00805f9b34fb",
-        "0000ffe0-0000-1000-8000-00805f9b34fb"
-      ]
-    });
-    const server=await printerDevice.gatt.connect();
-    const services=await server.getPrimaryServices();
-    for(const s of services){
-      const chars=await s.getCharacteristics();
-      const ch=chars.find(c=>c.properties.writeWithoutResponse||c.properties.write);
-      if(ch){printerCharacteristic=ch;break;}
-    }
-    if(!printerCharacteristic) throw new Error("No writable Bluetooth service");
-    setStatus("[ RPP02N CONNECTED ♡ ]");
-    return true;
-  }catch(e){
-    printerCharacteristic=null;
-    setStatus("[ RPP02N NOT CONNECTED ]");
-    return false;
-  }
-}
-async function printBlobToRPP02N(blob){
-  if(!printerCharacteristic){
-    if(!(await connectRPP02N())) return false;
-  }
-  const bmp=await createImageBitmap(blob);
-  const c=document.createElement("canvas");
-  const w=384, h=Math.max(1,Math.round(bmp.height*w/bmp.width));
-  c.width=w;c.height=h;
-  const ctx=c.getContext("2d"); ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);ctx.drawImage(bmp,0,0,w,h);bmp.close?.();
-  const d=ctx.getImageData(0,0,w,h).data, rb=Math.ceil(w/8), raster=new Uint8Array(rb*h);
-  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
-    const i=(y*w+x)*4, lum=.299*d[i]+.587*d[i+1]+.114*d[i+2];
-    if(lum<170) raster[y*rb+(x>>3)]|=0x80>>(x&7);
-  }
-  const bytes=new Uint8Array([0x1b,0x40,0x1d,0x76,0x30,0,rb&255,rb>>8,h&255,h>>8,...raster,0x0a,0x0a,0x0a]);
-  for(let i=0;i<bytes.length;i+=180){
-    const part=bytes.slice(i,i+180);
-    if(printerCharacteristic.properties.writeWithoutResponse) await printerCharacteristic.writeValueWithoutResponse(part);
-    else await printerCharacteristic.writeValue(part);
-    await new Promise(r=>setTimeout(r,8));
-  }
-  return true;
-}
-async function printReceiptToRPP02N(){
-  if(receiptBlob && await printBlobToRPP02N(receiptBlob)) setStatus("[ RECEIPT PRINTED ♡ ]");
-}
-async function printSquareToRPP02N(){
-  const blob=await makeCombinedThreePhoto();
-  if(blob && await printBlobToRPP02N(blob)) setStatus("[ 3 PHOTOS PRINTED ♡ ]");
-}
-
 
 const setStatus=t=>status.textContent=t;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -681,8 +895,7 @@ function retakePhoto(){
   ["sq1","sq2","sq3"].forEach(id=>$(id).removeAttribute("src"));
   $("threePhotoCombined").removeAttribute("src");
   $("threePhotoCombined").style.display="none";
-  $("squareFunPrint").disabled=true;
-  $("squareOpenFunPrint").disabled=true;
+  $("squarePrint").disabled=true;
   $("squareSave").disabled=true;
   captured.style.display="none";
   video.style.display="block";
@@ -700,45 +913,38 @@ function retakePhoto(){
     setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
   }
 }
+async function sendToNadayojiPrint(blob,label){
+ if(!blob){setStatus("[ NOTHING TO PRINT YET ]");return false;}
+ try{
+  if(navigator.clipboard && window.ClipboardItem && window.isSecureContext){
+   await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
+   setStatus("[ SENDING TO NADAYOJI PRINT ♡ ]");
+   window.location.href="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
+   return true;
+  }
+ }catch(e){console.log("Clipboard/Shortcut print unavailable",e);}
+ try{
+  const file=new File([blob],label,{type:"image/png"});
+  if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+   await navigator.share({files:[file],title:"NADAYOJI CAMS",text:"NADAYOJI CAMS print"});
+   setStatus("[ SENT TO SHARE MENU ♡ ]");
+   return true;
+  }
+ }catch(e){if(e && e.name==="AbortError")return false;}
+ setStatus("[ PRINT UNAVAILABLE — USE SAVE ]");
+ return false;
+}
+
+async function printReceiptImage(){if(receiptBlob)await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");}
 async function saveReceipt(){
  if(!receiptBlob)return;
- const file=new File([receiptBlob],"nadayoji-photo-receipt.png",{type:"image/png"});
- if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-   try{
-     setStatus("[ OPENING SHARE MENU → CHOOSE FUN PRINT ]");
-     await navigator.share({
-       files:[file],
-       title:"NADAYOJI CAMS Photo Receipt",
-       text:"NADAYOJI CAMS photo receipt."
-     });
-     setStatus("[ RECEIPT SENT TO SHARE MENU ♡ ]");
-     return;
-   }catch(e){
-     if(e && e.name==="AbortError") return;
-   }
- }
- // Fallback for browsers without file sharing.
  const u=URL.createObjectURL(receiptBlob),a=document.createElement("a");
  a.href=u;a.download=`nadayoji-photo-receipt-${Date.now()}.png`;
  document.body.appendChild(a);a.click();a.remove();
- setStatus("[ SAVED ♡ OPEN FUN PRINT → PICTURE IMAGES ]");
+ setStatus("[ RECEIPT SAVED ♡ ]");
  setTimeout(()=>URL.revokeObjectURL(u),1500);
 }
-async function shareReceipt(){
- if(!receiptBlob)return;
- const file=new File([receiptBlob],"nadayoji-photo-receipt.png",{type:"image/png"});
- if(!navigator.share || (navigator.canShare && !navigator.canShare({files:[file]}))){
-   setStatus("[ USE SAVE PHOTO AFTER SAVING THE RECEIPT ]");
-   return;
- }
- try{
-   await navigator.share({
-     files:[file],
-     title:"NADAYOJI CAMS Photo Receipt",
-     text:"NADAYOJI CAMS photo receipt."
-   });
- }catch(e){}
-}
+async function shareReceipt(){if(receiptBlob)await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");}
 
 $("cameraFallback").addEventListener("change",e=>{
  const file=e.target.files&&e.target.files[0]; if(!file)return;
@@ -808,7 +1014,7 @@ async function takeSquarePhoto(){
     $("sq"+(i+1)).src=URL.createObjectURL(blob);
     if(squareShots.length===3){
       $("threePhotoCombined").style.display="none";
-      $("squareFunPrint").disabled=false;$("squareOpenFunPrint").disabled=false;
+      $("squarePrint").disabled=false;
       $("squareSave").disabled=false;
       setStatus("[ 3 SQUARE PHOTOS READY ♡ ]");
       snap.textContent="[ 3 PHOTOS READY ]";
@@ -886,64 +1092,48 @@ async function makeFunPrintThreePhoto(){
  return await new Promise(resolve=>c.toBlob(resolve,"image/png"));
 }
 
-async function shareSquarePhotos(){
- const combined=await makeFunPrintThreePhoto();
+async function printSquarePhotos(){
+ const combined=await makeCombinedThreePhoto();
  if(!combined)return;
- const file=new File([combined],"nadayoji-3-square-photos-funprint.png",{type:"image/png"});
- if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
-  try{
-   await navigator.share({
-    files:[file],
-    title:"NADAYOJI CAMS — 3 Square Photos",
-    text:"Three square photos with doubled white borders."
-   });
-   setStatus("[ 3 PHOTOS SENT TO FUN PRINT ♡ ]");
-   return;
-  }catch(e){if(e && e.name==="AbortError")return;}
- }
- setStatus("[ SHARE UNAVAILABLE — USE SAVE PHOTO ]");
+ await sendToNadayojiPrint(combined,"nadayoji-3-square-photos.png");
 }
 
 async function saveSquarePhotos(){
-  const combined=await makeCombinedThreePhoto();
-  if(!combined)return;
-  $("threePhotoCombined").src=URL.createObjectURL(combined);
-  $("threePhotoCombined").style.display="block";
-  const u=URL.createObjectURL(combined),a=document.createElement("a");
-  a.href=u;a.download="nadayoji-3-square-photos.png";
-  document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(u),1500);
-  setStatus("[ 3 PHOTOS SAVED AS ONE IMAGE ♡ ]");
+ const combined=await makeCombinedThreePhoto();
+ if(!combined)return;
+ $("threePhotoCombined").src=URL.createObjectURL(combined);
+ $("threePhotoCombined").style.display="block";
+ const u=URL.createObjectURL(combined),a=document.createElement("a");
+ a.href=u;a.download="nadayoji-3-square-photos.png";
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(u),1500);
+ setStatus("[ 3 PHOTOS SAVED AS ONE IMAGE ♡ ]");
 }
 
 $("receiptMode").onclick=()=>{
-  boothMode="receipt";
-  squareShots=[];
-  ["sq1","sq2","sq3"].forEach(id=>$(id).removeAttribute("src"));
-  $("squareFunPrint").disabled=true;$("squareOpenFunPrint").disabled=true;$("squareSave").disabled=true;
-  updateModeUI();
+ boothMode="receipt";
+ squareShots=[];
+ ["sq1","sq2","sq3"].forEach(id=>$(id).removeAttribute("src"));
+ $("squarePrint").disabled=true;$("squareSave").disabled=true;
+ updateModeUI();
 };
 $("squareMode").onclick=()=>{
-  boothMode="square";
-  const box=document.querySelector(".camera");
-  if(box) box.classList.add("square-camera");
-  squareShots=[];
-  ["sq1","sq2","sq3"].forEach(id=>$(id).removeAttribute("src"));
-  $("squareFunPrint").disabled=true;$("squareSave").disabled=true;
-  updateModeUI();
+ boothMode="square";
+ const box=document.querySelector(".camera");
+ if(box) box.classList.add("square-camera");
+ squareShots=[];
+ ["sq1","sq2","sq3"].forEach(id=>$(id).removeAttribute("src"));
+ $("squarePrint").disabled=true;$("squareSave").disabled=true;
+ updateModeUI();
 };
-$("squareFunPrint").onclick=saveSquarePhotos;
-$("squareOpenFunPrint").onclick=shareSquarePhotos;
+$("squarePrint").onclick=printSquarePhotos;
 $("squareSave").onclick=saveSquarePhotos;
 
 start.onclick=async()=>{
  if(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) await startCamera();
  else $("cameraFallback").click();
 };
-snap.onclick=()=>boothMode==="square"?takeSquarePhoto():takePhoto();retake.onclick=retakePhoto;save.onclick=saveReceipt;share.onclick=shareReceipt;updateModeUI();
-if(document.getElementById("printerConnect")) document.getElementById("printerConnect").addEventListener("click",connectRPP02N);
-if(document.getElementById("receiptPrint")) document.getElementById("receiptPrint").addEventListener("click",printReceiptToRPP02N);
-if(document.getElementById("squarePrint")) document.getElementById("squarePrint").addEventListener("click",printSquareToRPP02N);
+snap.onclick=()=>boothMode==="square"?takeSquarePhoto():takePhoto();retake.onclick=retakePhoto;save.onclick=saveReceipt;printReceipt.onclick=printReceiptImage;updateModeUI();
 })();
 </script>
 </body>
