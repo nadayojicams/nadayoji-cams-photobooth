@@ -650,7 +650,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
       <canvas id="threePhotoCanvas" class="hidden"></canvas>
       <img id="threePhotoCombined" class="three-photo-combined" alt="Three square photos with white border" style="display:none">
       <div class="receipt-actions square-actions">
-        <button id="squarePrint" class="primary" disabled>[ PRINT WITH QUICKPRINT ]</button>
+        <button id="squarePrint" class="primary" disabled>[ ♡ PRINT RECEIPT ♡ ]</button>
         <button id="squareSave" disabled>[ ⇩ SAVE 3 PHOTOS ]</button>
       </div>
     </section>
@@ -682,7 +682,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
       </div>
 
       <div class="receipt-actions">
-        <button id="printReceipt" class="primary" disabled>[ PRINT WITH QUICKPRINT ]</button>
+        <button id="printReceipt" class="primary" disabled>[ ♡ PRINT RECEIPT ♡ ]</button>
         <button id="save" disabled>[ ⇩ SAVE RECEIPT ]</button>
       </div>
       <div class="hint">PRINT saves the receipt and opens QuickPrint through the iPad share menu.</div>
@@ -988,16 +988,16 @@ async function sendToQuickPrint(blob,label){
  try{
    const file=new File([blob],filename,{type:blob.type||"image/png",lastModified:Date.now()});
    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
-     setStatus("[ OPENING QUICKPRINT ♡ ]");
-     await navigator.share({files:[file],title:"NADAYOJI CAMS Receipt",text:"Print this receipt with QuickPrint."});
-     setStatus("[ SENT TO QUICKPRINT ♡ ]");
+     setStatus("[ PRINTING ♡ ]");
+     await navigator.share({files:[file],title:"NADAYOJI CAMS Receipt",text:"NADAYOJI CAMS receipt"});
+     setStatus("[ PRINT SENT ♡ ]");
      return true;
    }
    throw new Error("File sharing is not supported on this iPad/browser.");
  }catch(e){
    if(e && e.name==="AbortError"){ setStatus("[ PRINT CANCELLED ]"); return false; }
    console.log("QuickPrint share failed",e);
-   setStatus("[ TAP SHARE AND CHOOSE QUICKPRINT ]");
+   setStatus("[ CHOOSE QUICKPRINT TO PRINT ♡ ]");
    return false;
  }
 }
