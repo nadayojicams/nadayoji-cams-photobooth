@@ -871,28 +871,28 @@ function buildReceipt(photoBlob){
 
     // NADAYOJI logo — preserve the complete 1:1 square artwork.
     // The source asset is 500x500; draw the entire asset into a square with no crop.
-    const logoSize=80;
+    const logoSize=160;
     const logoX=center-logoSize/2, logoY=25;
     // Keep the generated receipt logo compact and fully separated from the title.
     ctx.drawImage(logo,logoX,logoY,logoSize,logoSize);
 
-    let y=logoY+logoSize+28;
-    rule(); y+=22;
-    txt("✦ PHOTO RECEIPT ✦",y,32,900); y+=30;
+    let y=logoY+logoSize+40;
+    rule(); y+=30;
+    txt("✦ PHOTO RECEIPT ✦",y,64,900); y+=55;
 
     // Photo: preserve the exact source ratio, no stretching and no gray bars.
     const pw=photo.width, ph=photo.height;
     const scale=MAX_PHOTO_W/pw;
     const drawW=MAX_PHOTO_W, drawH=ph*scale;
-    const maxPhotoH=430;
+    const maxPhotoH=860;
     const finalScale=Math.min(1, maxPhotoH/drawH);
     const fw=pw*scale*finalScale, fh=ph*scale*finalScale;
     ctx.drawImage(photo,center-fw/2,y,fw,fh);
-    y+=fh+25;
+    y+=fh+40;
 
     ctx.textAlign="left";
     ctx.fillStyle="#000";
-    ctx.font="900 27px Arial, Helvetica, sans-serif";
+    ctx.font="900 54px Arial, Helvetica, sans-serif";
     const details=[
       ["DATE",$("rDate").textContent],
       ["TIME",$("rTime").textContent],
@@ -902,27 +902,27 @@ function buildReceipt(photoBlob){
     for(const [k,v] of details){
       ctx.fillText(k+" :",PAD,y);
       ctx.fillText(v,245,y);
-      y+=36;
+      y+=72;
     }
-    y+=10; rule(); y+=28;
+    y+=20; rule(); y+=40;
 
-    txt("ABOUT NADAYOJI CAMS",y,28,900); y+=30;
-    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,19,W-110,25);
-    y+=6;
-    y=wrap("Y2K memories brought back to life through cameras.",y,19,W-110,25);
-    y+=10;
-    txt("Capture moments.",y,23,900); y+=28;
-    txt("Keep the memory.",y,23,900); y+=35;
+    txt("ABOUT NADAYOJI CAMS",y,56,900); y+=55;
+    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,38,W-110,50);
+    y+=12;
+    y=wrap("Y2K memories brought back to life through cameras.",y,38,W-110,50);
+    y+=20;
+    txt("Capture moments.",y,46,900); y+=55;
+    txt("Keep the memory.",y,46,900); y+=65;
 
-    rule(); y+=28;
-    txt("THANK YOU FOR SUPPORTING",y,23,900); y+=28;
-    txt("NADAYOJI CAMS!",y,29,900); y+=32;
-    txt("♥  KEEP THE MEMORY  ♡",y,22,900); y+=35;
+    rule(); y+=40;
+    txt("THANK YOU FOR SUPPORTING",y,46,900); y+=55;
+    txt("NADAYOJI CAMS!",y,58,900); y+=60;
+    txt("♥  KEEP THE MEMORY  ♡",y,44,900); y+=65;
 
-    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,19,900); y+=35;
-    rule(); y+=28;
-    txt("MEMORIES FADE, PHOTOS DON'T.",y,22,900); y+=28;
-    txt("— NADAYOJI CAMS —",y,20,800); y+=35;
+    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,38,900); y+=65;
+    rule(); y+=40;
+    txt("MEMORIES FADE, PHOTOS DON'T.",y,44,900); y+=55;
+    txt("— NADAYOJI CAMS —",y,40,800); y+=65;
 
     // Crop the canvas exactly at the end of the content.
     const finalH=Math.ceil(y*0.96);
