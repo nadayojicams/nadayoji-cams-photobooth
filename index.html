@@ -650,7 +650,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
       <canvas id="threePhotoCanvas" class="hidden"></canvas>
       <img id="threePhotoCombined" class="three-photo-combined" alt="Three square photos with white border" style="display:none">
       <div class="receipt-actions square-actions">
-        <button id="squarePrint" class="primary" disabled>[ ♡ PRINT RECEIPT ♡ ]</button>
+        <button id="squarePrint" class="primary" disabled>[ ♡ PRINT TO QUICKPRINT ♡ ]</button>
         <button id="squareSave" disabled>[ ⇩ SAVE 3 PHOTOS ]</button>
       </div>
     </section>
@@ -682,10 +682,10 @@ button:disabled{opacity:.35;cursor:not-allowed}
       </div>
 
       <div class="receipt-actions">
-        <button id="printReceipt" class="primary" disabled>[ ♡ PRINT RECEIPT ♡ ]</button>
+        <button id="printReceipt" class="primary" disabled>[ ♡ PRINT TO QUICKPRINT ♡ ]</button>
         <button id="save" disabled>[ ⇩ SAVE RECEIPT ]</button>
       </div>
-      <div class="hint">PRINT saves the receipt and opens QuickPrint through the iPad share menu.</div>
+      <div class="hint">PRINT automatically saves the receipt and sends it to QuickPrint.</div>
     </section>
   </div>
   <div class="footer">♡ NADAYOJI CAMS ♡</div>
@@ -907,15 +907,24 @@ function buildReceipt(photoBlob){
     txt("MEMORIES FADE, PHOTOS DON'T.",y,44,900); y+=34;
     txt("— NADAYOJI CAMS —",y,38,800); y+=40;
 
-    // Crop exactly to the finished receipt while keeping the ORIGINAL 800px artwork width.
-    // No 384-dot conversion: QuickPrint receives the full receipt PNG without a forced 384-dot resize.
-    const finalH=y;
-    canvas.height=finalH;
+    // IMPORTANT: changing canvas.width/height after drawing clears the canvas.
+    // Render into a second canvas at the final height so the finished receipt
+    // is never blank. Keep the full 800px artwork width.
+    const finalH=Math.ceil(y);
+    const out=document.createElement("canvas");
+    out.width=W;
+    out.height=finalH;
+    const outCtx=out.getContext("2d");
+    outCtx.imageSmoothingEnabled=true;
+    outCtx.imageSmoothingQuality="high";
+    outCtx.drawImage(canvas,0,0,W,finalH,0,0,W,finalH);
 
-    canvas.toBlob(async blob=>{
+    out.toBlob(blob=>{
+      if(!blob){
+        setStatus("[ RECEIPT ERROR — TRY AGAIN ]");
+        return;
+      }
       receiptBlob=blob;
-      // The receipt stays as one PNG. PRINT will auto-save it locally and pass the
-      // same file to the iPad share menu, where QuickPrint can receive it.
       setStatus("[ PHOTO READY ♡ TAP PRINT TO PRINT ]");
       const url=URL.createObjectURL(blob);
       const paper=$("receiptPaper");
@@ -927,7 +936,6 @@ function buildReceipt(photoBlob){
       paper.appendChild(preview);
       save.disabled=false;
       printReceipt.disabled=false;
-      
     },"image/png");
   }
 
@@ -982,24 +990,47 @@ async function autoSaveReceipt(blob,label){
 }
 
 async function sendToQuickPrint(blob,label){
- if(!blob){setStatus("[ NOTHING TO PRINT YET ]");return false;}
- const filename=label||"nadayoji-photo-receipt.png";
- await autoSaveReceipt(blob,filename);
- try{
-   const file=new File([blob],filename,{type:blob.type||"image/png",lastModified:Date.now()});
-   if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
-     setStatus("[ PRINTING ♡ ]");
-     await navigator.share({files:[file],title:"NADAYOJI CAMS Receipt",text:"NADAYOJI CAMS receipt"});
-     setStatus("[ PRINT SENT ♡ ]");
-     return true;
-   }
-   throw new Error("File sharing is not supported on this iPad/browser.");
- }catch(e){
-   if(e && e.name==="AbortError"){ setStatus("[ PRINT CANCELLED ]"); return false; }
-   console.log("QuickPrint share failed",e);
-   setStatus("[ CHOOSE QUICKPRINT TO PRINT ♡ ]");
-   return false;
- }
+  if(!blob){setStatus("[ TAKE A PHOTO FIRST ]");return false;}
+  const filename=label||"nadayoji-photo-receipt.png";
+
+  // Always save a local copy first, without blocking the print hand-off.
+  autoSaveReceipt(blob,filename).catch(()=>{});
+
+  const file=new File([blob],filename,{
+    type:"image/png",
+    lastModified:Date.now()
+  });
+
+  // QuickPrint is selected from Apple's native share sheet. This is the
+  // browser-supported way to hand a freshly generated receipt image to an
+  // installed iPad printing app without Shortcuts or another bridge.
+  if(!navigator.share){
+    setStatus("[ SHARE IS NOT AVAILABLE — OPEN IN SAFARI ]");
+    return false;
+  }
+
+  if(navigator.canShare && !navigator.canShare({files:[file]})){
+    setStatus("[ THIS IPAD CANNOT SHARE THE RECEIPT IMAGE ]");
+    return false;
+  }
+
+  try{
+    setStatus("[ OPENING QUICKPRINT ♡ ]");
+    await navigator.share({
+      files:[file],
+      title:"NADAYOJI CAMS Receipt"
+    });
+    setStatus("[ SENT TO QUICKPRINT ♡ ]");
+    return true;
+  }catch(e){
+    if(e && e.name==="AbortError"){
+      setStatus("[ PRINT CANCELLED ]");
+      return false;
+    }
+    console.error(e);
+    setStatus("[ QUICKPRINT WAS NOT OPENED ]");
+    return false;
+  }
 }
 
 async function printReceiptImage(){
