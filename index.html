@@ -970,23 +970,32 @@ function retakePhoto(){
     setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
   }
 }
-async function sendToNadayojiPrint(blob,label){
+function sendToNadayojiPrint(blob,label){
  if(!blob){setStatus("[ NOTHING TO PRINT YET ]");return false;}
+ if(!(navigator.clipboard && window.ClipboardItem && window.isSecureContext)){
+  setStatus("[ OPEN THIS WEBSITE IN SAFARI TO PRINT ]");
+  return false;
+ }
  try{
-  if(navigator.clipboard && window.ClipboardItem && window.isSecureContext){
-   await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
-   setStatus("[ SENDING TO NADAYOJI PRINT ♡ ]");
-   const a=document.createElement("a");
-   a.href="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
-   a.style.display="none";
-   document.body.appendChild(a);
-   a.click();
-   setTimeout(()=>a.remove(),1000);
-   return true;
-  }
- }catch(e){console.log("Clipboard/Shortcut print unavailable",e);}
- setStatus("[ PRINT COULD NOT START — TAP PRINT AGAIN ]");
- return false;
+  // Start the clipboard write and launch the Shortcut from the same button gesture.
+  // Waiting for the clipboard promise first can cause iPadOS/Safari to block the
+  // shortcuts:// URL because the original user gesture has already ended.
+  const writePromise=navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
+  setStatus("[ SENDING TO NADAYOJI PRINT ♡ ]");
+  const url="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
+  const a=document.createElement("a");
+  a.href=url;
+  a.style.display="none";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>a.remove(),1000);
+  writePromise.catch(e=>console.log("Clipboard write failed",e));
+  return true;
+ }catch(e){
+  console.log("Shortcut print unavailable",e);
+  setStatus("[ PRINT COULD NOT START — TAP PRINT AGAIN ]");
+  return false;
+ }
 }
 
 async function printReceiptImage(){if(!receiptBlob){setStatus("[ TAKE A PHOTO FIRST ]");return;} await sendToNadayojiPrint(receiptBlob,"nadayoji-photo-receipt.png");}
