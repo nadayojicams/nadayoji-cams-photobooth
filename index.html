@@ -736,7 +736,7 @@ async function startCamera(){
   video.onloadedmetadata=syncCameraRatio;
   video.onresize=syncCameraRatio;
   video.style.display="block";captured.style.display="none";
-  snap.disabled=false;retake.disabled=true;save.disabled=true;printReceipt.disabled=true;share.disabled=true;
+  snap.disabled=false;retake.disabled=true;save.disabled=true;printReceipt.disabled=true;/* share button removed */
   start.textContent="[ CAMERA READY ]";setStatus("[ LOOK AT THE SCREEN • TAP SNAP ♡ ]");
  }catch(e){
   console.error("Camera error:",e);
@@ -854,28 +854,28 @@ function buildReceipt(photoBlob){
 
     // NADAYOJI logo — preserve the complete 1:1 square artwork.
     // The source asset is 500x500; draw the entire asset into a square with no crop.
-    const logoSize=110;
+    const logoSize=80;
     const logoX=center-logoSize/2, logoY=25;
     // Keep the generated receipt logo compact and fully separated from the title.
     ctx.drawImage(logo,logoX,logoY,logoSize,logoSize);
 
-    let y=logoY+logoSize+55;
-    rule(); y+=42;
-    txt("✦ PHOTO RECEIPT ✦",y,40,900); y+=52;
+    let y=logoY+logoSize+28;
+    rule(); y+=22;
+    txt("✦ PHOTO RECEIPT ✦",y,32,900); y+=30;
 
     // Photo: preserve the exact source ratio, no stretching and no gray bars.
     const pw=photo.width, ph=photo.height;
     const scale=MAX_PHOTO_W/pw;
     const drawW=MAX_PHOTO_W, drawH=ph*scale;
-    const maxPhotoH=780;
+    const maxPhotoH=430;
     const finalScale=Math.min(1, maxPhotoH/drawH);
     const fw=pw*scale*finalScale, fh=ph*scale*finalScale;
     ctx.drawImage(photo,center-fw/2,y,fw,fh);
-    y+=fh+48;
+    y+=fh+25;
 
     ctx.textAlign="left";
     ctx.fillStyle="#000";
-    ctx.font="900 34px Arial, Helvetica, sans-serif";
+    ctx.font="900 27px Arial, Helvetica, sans-serif";
     const details=[
       ["DATE",$("rDate").textContent],
       ["TIME",$("rTime").textContent],
@@ -885,27 +885,27 @@ function buildReceipt(photoBlob){
     for(const [k,v] of details){
       ctx.fillText(k+" :",PAD,y);
       ctx.fillText(v,245,y);
-      y+=48;
+      y+=36;
     }
-    y+=18; rule(); y+=58;
+    y+=10; rule(); y+=28;
 
-    txt("ABOUT NADAYOJI CAMS",y,34,900); y+=48;
-    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,24,W-110,34);
+    txt("ABOUT NADAYOJI CAMS",y,28,900); y+=30;
+    y=wrap("Digital camera shop and rental service based in Naga City, Camarines Sur.",y,19,W-110,25);
+    y+=6;
+    y=wrap("Y2K memories brought back to life through cameras.",y,19,W-110,25);
     y+=10;
-    y=wrap("Y2K memories brought back to life through cameras.",y,24,W-110,34);
-    y+=18;
-    txt("Capture moments.",y,28,900); y+=38;
-    txt("Keep the memory.",y,28,900); y+=62;
+    txt("Capture moments.",y,23,900); y+=28;
+    txt("Keep the memory.",y,23,900); y+=35;
 
-    rule(); y+=58;
-    txt("THANK YOU FOR SUPPORTING",y,29,900); y+=40;
-    txt("NADAYOJI CAMS!",y,36,900); y+=48;
-    txt("♥  KEEP THE MEMORY  ♡",y,27,900); y+=58;
+    rule(); y+=28;
+    txt("THANK YOU FOR SUPPORTING",y,23,900); y+=28;
+    txt("NADAYOJI CAMS!",y,29,900); y+=32;
+    txt("♥  KEEP THE MEMORY  ♡",y,22,900); y+=35;
 
-    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,25,900); y+=62;
-    rule(); y+=58;
-    txt("MEMORIES FADE, PHOTOS DON'T.",y,28,900); y+=42;
-    txt("— NADAYOJI CAMS —",y,25,800); y+=70;
+    txt("@nadayoji.cams  •  CAROUSELL @nadayojiii",y,19,900); y+=35;
+    rule(); y+=28;
+    txt("MEMORIES FADE, PHOTOS DON'T.",y,22,900); y+=28;
+    txt("— NADAYOJI CAMS —",y,20,800); y+=35;
 
     // Crop the canvas exactly at the end of the content.
     const finalH=y;
@@ -920,7 +920,8 @@ function buildReceipt(photoBlob){
     finalCtx.imageSmoothingQuality="high";
     finalCtx.fillStyle="#fff";
     finalCtx.fillRect(0,0,PRINT_W,PRINT_H);
-    finalCtx.drawImage(canvas,0,0,W,finalH,0,0,PRINT_W,PRINT_H);
+    const PRINT_SHIFT_X=-24;
+    finalCtx.drawImage(canvas,0,0,W,finalH,PRINT_SHIFT_X,0,PRINT_W,PRINT_H);
 
     finalCanvas.toBlob(blob=>{
       receiptBlob=blob;
@@ -934,7 +935,7 @@ function buildReceipt(photoBlob){
       paper.appendChild(preview);
       save.disabled=false;
       printReceipt.disabled=false;
-      share.disabled=!navigator.share;
+      /* share button removed */
     },"image/png");
   }
 
@@ -960,7 +961,7 @@ function retakePhoto(){
   snap.disabled=!stream;
   retake.disabled=true;
   save.disabled=true;
-  share.disabled=true;
+  /* share button removed */
   if(boothMode==="square"){
     snap.textContent="[ ♡ SQUARE 1/3 ♡ ]";
     setStatus("[ 3 SQUARE PHOTOS MODE ♡ PHOTO 1/3 ]");
@@ -975,19 +976,16 @@ async function sendToNadayojiPrint(blob,label){
   if(navigator.clipboard && window.ClipboardItem && window.isSecureContext){
    await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
    setStatus("[ SENDING TO NADAYOJI PRINT ♡ ]");
-   window.location.href="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
+   const a=document.createElement("a");
+   a.href="shortcuts://run-shortcut?name="+encodeURIComponent(NADAYOJI_PRINT_SHORTCUT)+"&input=clipboard";
+   a.style.display="none";
+   document.body.appendChild(a);
+   a.click();
+   setTimeout(()=>a.remove(),1000);
    return true;
   }
  }catch(e){console.log("Clipboard/Shortcut print unavailable",e);}
- try{
-  const file=new File([blob],label,{type:"image/png"});
-  if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
-   await navigator.share({files:[file],title:"NADAYOJI CAMS",text:"NADAYOJI CAMS print"});
-   setStatus("[ SENT TO SHARE MENU ♡ ]");
-   return true;
-  }
- }catch(e){if(e && e.name==="AbortError")return false;}
- setStatus("[ PRINT UNAVAILABLE — USE SAVE ]");
+ setStatus("[ PRINT COULD NOT START — TAP PRINT AGAIN ]");
  return false;
 }
 
