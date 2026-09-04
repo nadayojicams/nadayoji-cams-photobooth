@@ -922,9 +922,10 @@ function buildReceipt(photoBlob){
     // Crop the canvas exactly at the end of the content.
     const finalH=y;
     // One final receipt PNG is used for BOTH the on-screen preview and printing.
-    // 384 dots is the RPP02N's valid print width.
-    const PRINT_W=384;
-    const PRINT_H=Math.round(finalH*(PRINT_W/W));
+    // Keep the original receipt artwork size. No printer dot-width is forced here.
+    // Mobile Print Util handles the final paper-width fitting.
+    const PRINT_W=W;
+    const PRINT_H=finalH;
     const finalCanvas=document.createElement("canvas");
     finalCanvas.width=PRINT_W; finalCanvas.height=PRINT_H;
     const finalCtx=finalCanvas.getContext("2d");
@@ -932,7 +933,7 @@ function buildReceipt(photoBlob){
     finalCtx.imageSmoothingQuality="high";
     finalCtx.fillStyle="#fff";
     finalCtx.fillRect(0,0,PRINT_W,PRINT_H);
-    // No horizontal compensation: the print PNG must be identical to the receipt preview.
+    // Preserve the original 800px receipt artwork without dot-width resampling.
     finalCtx.drawImage(canvas,0,0,W,finalH,0,0,PRINT_W,PRINT_H);
 
     finalCanvas.toBlob(async blob=>{
@@ -1004,13 +1005,12 @@ function showPrinting(show){
 function base64FromDataUrl(dataUrl){const comma=dataUrl.indexOf(",");return comma>=0?dataUrl.slice(comma+1):"";}
 function makeMobilePrintUrlFromDataUrl(dataUrl){
  const b64=base64FromDataUrl(dataUrl); if(!b64)return "";
- // Mobile Print Util documents #deb64# for Base64 UTF-8 HTML. The explicit
- // 384px viewport is important: without it an iOS WebView may use a wide
- // default viewport and scale the 384-dot receipt down dramatically.
+ // Mobile Print Util accepts #deb64# Base64 UTF-8 HTML.
+ // No dot count, fixed viewport, or forced CSS width is used.
+ // The receipt remains at its original 800px artwork size.
  const html='<!doctype html><html><head><meta charset="utf-8">'+
-   '<meta name="viewport" content="width=384, initial-scale=1, maximum-scale=1, user-scalable=no">'+
-   '<style>html,body{margin:0!important;padding:0!important;width:384px!important;background:#fff!important}img{display:block;width:384px!important;height:auto!important;margin:0!important;padding:0!important;border:0!important}</style>'+ 
-   '</head><body><img src="data:image/png;base64,'+b64+'" width="384"></body></html>';
+   '<style>html,body{margin:0!important;padding:0!important;background:#fff!important}img{display:block;width:auto!important;height:auto!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important}</style>'+
+   '</head><body><img src="data:image/png;base64,'+b64+'"></body></html>';
  const bytes=new TextEncoder().encode(html); let binary=""; const chunk=0x8000;
  for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));
  return "com.samathosoft.webprint://#deb64#"+btoa(binary);
